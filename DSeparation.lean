@@ -7,6 +7,7 @@ import DSeparation.BayesBall.Basic
 import DSeparation.BayesBall.Certified
 import DSeparation.MAGWalk
 import DSeparation.Equivalence
+import DSeparation.ActiveRoute
 import DSeparation.Reverse
 import DSeparation.Counterexample
 import DSeparation.Examples

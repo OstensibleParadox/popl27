@@ -37,38 +37,6 @@ lemma mem_nodes_of_reachable {G : DAG} {u v : ℕ}
 
 end DAG
 
-namespace Trail
-
-/-- Concatenate two DAG trails. -/
-def append {G : DAG} {u v w : ℕ} (p : Trail G u v) (q : Trail G v w) :
-    Trail G u w :=
-  match p with
-  | nil _ => q
-  | forward h tail => forward h (tail.append q)
-  | backward h tail => backward h (tail.append q)
-
-/-- A directed reachability proof gives a trail following all edges forward. -/
-lemma exists_ofReachableForward {G : DAG} {u v : ℕ}
-    (h : Reachable G u v) : Nonempty (Trail G u v) := by
-  induction h with
-  | refl =>
-      exact ⟨Trail.nil u⟩
-  | tail _ hstep ih =>
-      rcases ih with ⟨tail⟩
-      exact ⟨tail.append (Trail.forward hstep (Trail.nil _))⟩
-
-/-- A directed reachability proof gives a trail in reverse by traversing edges backward. -/
-lemma exists_ofReachableBackward {G : DAG} {u v : ℕ}
-    (h : Reachable G u v) : Nonempty (Trail G v u) := by
-  induction h with
-  | refl =>
-      exact ⟨Trail.nil u⟩
-  | tail _ hstep ih =>
-      rcases ih with ⟨tail⟩
-      exact ⟨(Trail.backward hstep (Trail.nil _)).append tail⟩
-
-end Trail
-
 lemma not_trailBlocked_two {G : DAG} {Z : Finset ℕ} {a b : ℕ} :
     ¬ TrailBlocked G Z [a, b] := by
   intro hblocked
