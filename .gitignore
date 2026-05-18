@@ -1,6 +1,10 @@
 # Lean
 .lake/
 
+# Local proof experiments
+scratch/
+test_*.lean
+
 # macOS
 .DS_Store
 **/.DS_Store

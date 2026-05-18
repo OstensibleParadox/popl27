@@ -68,6 +68,15 @@ lemma mem_ancestors_self (G : DAG) {v : ℕ} (hv : v ∈ G.nodes) :
     v ∈ G.ancestors v := by
   simp [DAG.ancestors, hv, Reachable, Relation.ReflTransGen.refl]
 
+lemma target_mem_nodes_of_reachable {G : DAG} {u v : ℕ}
+    (hreach : Reachable G u v) (hu : u ∈ G.nodes) :
+    v ∈ G.nodes := by
+  induction hreach with
+  | refl =>
+      exact hu
+  | tail _ hstep _ =>
+      exact (G.edges_subset hstep).2
+
 lemma mem_ancestralSubgraphNodes_of_mem {G : DAG} {S : Finset ℕ} {v : ℕ}
     (hvS : v ∈ S) (hvG : v ∈ G.nodes) :
     v ∈ G.ancestralSubgraphNodes S := by

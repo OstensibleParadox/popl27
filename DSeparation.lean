@@ -23,6 +23,8 @@ Root module for the d-separation formalization. This library provides:
 - `MAGWalk` as a compressed walk language equivalent to moral-graph reachability
 - Soundness theorem: `DAG.dSeparated → dSeparates` under `DisjointSets X Y Z`
 - Concrete counterexample showing unrestricted equivalence is false
+- Reverse witness-synthesis workspace in `DSeparation.TraceSynthesis`
 
-All proofs are constructive and carry zero sorries.
+The reverse workspace currently typechecks with one isolated proof debt:
+`route_improves_of_bad` in `DSeparation/TraceSynthesis/Assembly.lean`.
 -/

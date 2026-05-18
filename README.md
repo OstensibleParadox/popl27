@@ -14,8 +14,32 @@ lake build
 Pinned by `lean-toolchain` and `lake-manifest.json`.
 
 ```bash
-lake build   # all ~8300 jobs pass, zero sorries
+lake build   # all ~8300 jobs typecheck
+lake build DSeparation.TraceSynthesis  # reverse-direction workspace
 ```
+
+## Workspace Hygiene
+
+Keep temporary Lean proof experiments out of the repository root.  Put scratch
+files under:
+
+```text
+scratch/lean-experiments/
+```
+
+For example:
+
+```bash
+lake env lean scratch/lean-experiments/test_exists.lean
+```
+
+Both `scratch/` and root-level `test_*.lean` files are ignored by Git, but new
+agents should still use `scratch/lean-experiments/` so the root directory stays
+readable.
+
+Do not add declarations directly to `DSeparation/TraceSynthesis.lean`; it is an
+aggregate import only.  Put new reverse-synthesis code in the appropriate
+submodule under `DSeparation/TraceSynthesis/`.
 
 ## Main Results
 
@@ -28,6 +52,11 @@ lake build   # all ~8300 jobs pass, zero sorries
 | Certified Bayes-ball path | `DSeparation/BayesBall/Certified.lean` | `bayesBallPathCert_of_active_trail_outOf` |
 | Bayes-ball → MAGWalk | `DSeparation/MAGWalk.lean` | `BayesBallPath.compress` |
 | MAGWalk ↔ graph reachability | `DSeparation/MAGWalk.lean` | `magWalk_iff_dSeparationGraph_reachable` |
+| Static route IR for reverse synthesis | `DSeparation/TraceSynthesis/StaticRoute.lean` | `StaticStep`, `StaticRoute` |
+| Reachability → static route witness | `DSeparation/TraceSynthesis/StaticRoute.lean` | `nonemptyStaticRoute_of_dSeparationGraph_reachable` |
+| Zero-bad-collider route → open trace | `DSeparation/TraceSynthesis/OpenTrace.lean` | `openTrace_of_countBadColliders_zero` |
+| Zero-bad-collider route → active witness | `DSeparation/TraceSynthesis/OpenTrace.lean` | `activeRoute_of_countBadColliders_zero`, `activeTrail_of_countBadColliders_zero` |
+| Minimal bad-collider witness wrapper | `DSeparation/TraceSynthesis/MinimalWitness.lean` | `StaticRouteWitness`, `minRouteBadCountWitness`, `normalized_route_exists_of_improves` |
 
 ## Module Structure
 
@@ -45,6 +74,15 @@ DSeparation/
 │   └── Certified.lean          -- certified version with node-survival proofs
 ├── MAGWalk.lean                -- compressed walk language, equivalence theorem
 ├── Equivalence.lean            -- main soundness theorem
+├── ActiveRoute.lean            -- Type-valued Bayes-ball routes and active trails
+├── TraceSynthesis.lean         -- aggregate import for reverse synthesis
+├── TraceSynthesis/
+│   ├── Graph.lean              -- graph lemmas used by normalization
+│   ├── StaticRoute.lean        -- static route IR and moral reachability bridge
+│   ├── OpenTrace.lean          -- local-open trace compiler and active-route bridge
+│   ├── MinimalWitness.lean     -- bad-collider minimality wrapper
+│   └── Assembly.lean           -- final assembly and remaining proof debt
+├── Reverse.lean                -- singleton moral-adjacency active-trail witnesses
 ├── Counterexample.lean         -- concrete counterexample
 └── Examples.lean               -- checkable DAG instances (chain3, fork3, collider3)
 ```
@@ -64,4 +102,12 @@ pdflatex main.tex   # compiles to main.pdf
   is well-foundedness of the edge relation.
 - **Constructive proofs**: all existence proofs are computable; counterexamples
   are explicit `DAG` instances.
-- **Zero sorries**: the entire development compiles without `sorry` or `admit`.
+- **Typed reverse-synthesis IR**: static moral-graph evidence is preserved as
+  `StaticRoute`, with forward/backward direct steps and moral jumps represented
+  as data rather than hidden inside `Prop`.
+- **Layered reverse synthesis**: `TraceSynthesis` is split into graph lemmas,
+  static route IR, open-trace compilation, minimal-witness selection, and final
+  assembly.  The aggregate `DSeparation.TraceSynthesis` import remains stable.
+- **Proof-debt status**: the development typechecks, with the remaining reverse
+  synthesis proof debt isolated at `route_improves_of_bad` in
+  `DSeparation/TraceSynthesis/Assembly.lean`.
