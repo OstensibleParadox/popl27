@@ -1,0 +1,14 @@
+# Lean
+.lake/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk
