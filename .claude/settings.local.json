@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(paper-humanizer)",
+      "Bash(lake build *)",
+      "Bash(cp /tmp/axcheck.lean ./AxCheck.lean)",
+      "Bash(lake env *)"
+    ]
+  }
+}

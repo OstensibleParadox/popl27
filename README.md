@@ -81,7 +81,8 @@ DSeparation/
 │   ├── StaticRoute.lean        -- static route IR and moral reachability bridge
 │   ├── OpenTrace.lean          -- local-open trace compiler and active-route bridge
 │   ├── MinimalWitness.lean     -- bad-collider minimality wrapper
-│   └── Assembly.lean           -- final assembly and remaining proof debt
+│   ├── Split.lean              -- first-bad-collider splitter interface
+│   └── Assembly.lean           -- final reverse-direction assembly
 ├── Reverse.lean                -- singleton moral-adjacency active-trail witnesses
 ├── Counterexample.lean         -- concrete counterexample
 └── Examples.lean               -- checkable DAG instances (chain3, fork3, collider3)
@@ -108,6 +109,8 @@ pdflatex main.tex   # compiles to main.pdf
 - **Layered reverse synthesis**: `TraceSynthesis` is split into graph lemmas,
   static route IR, open-trace compilation, minimal-witness selection, and final
   assembly.  The aggregate `DSeparation.TraceSynthesis` import remains stable.
-- **Proof-debt status**: the development typechecks, with the remaining reverse
-  synthesis proof debt isolated at `route_improves_of_bad` in
-  `DSeparation/TraceSynthesis/Assembly.lean`.
+- **Proof-work status**: Phase 4 is actively being proved.  The current working
+  area is `TraceSynthesis/Split.lean` (`exists_split`) plus
+  `TraceSynthesis/Graph.lean` (`escape_path_survives`).  Do not overwrite those
+  files or assume the reverse workspace is in a clean rebuild state while a proof
+  attempt is in progress.

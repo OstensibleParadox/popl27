@@ -25,6 +25,7 @@ Root module for the d-separation formalization. This library provides:
 - Concrete counterexample showing unrestricted equivalence is false
 - Reverse witness-synthesis workspace in `DSeparation.TraceSynthesis`
 
-The reverse workspace currently typechecks with one isolated proof debt:
-`route_improves_of_bad` in `DSeparation/TraceSynthesis/Assembly.lean`.
+The reverse workspace is under active Phase 4 proof construction.  Current
+working targets are `exists_split` in `DSeparation/TraceSynthesis/Split.lean`
+and `escape_path_survives` in `DSeparation/TraceSynthesis/Graph.lean`.
 -/
