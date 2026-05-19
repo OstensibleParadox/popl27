@@ -1,3 +1,4 @@
+> ARCHIVED 2026-05-19 — superseded by docs/ARCHITECTURE.md and CHANGELOG.md.
 通过类型论强制（Dependent Typing）揭示概率因果模型核心的隐藏控制流。
 
 ### POPL 2027：Title Ideas

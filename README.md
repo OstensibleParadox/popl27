@@ -4,6 +4,12 @@ Standalone Lean 4 package formalizing the two standard characterizations of
 d-separation (trail blocking and moralized ancestral-graph separation) and
 proving that unrestricted equivalence is false.
 
+## Documentation Map
+
+- Architecture & strategy: `docs/ARCHITECTURE.md`
+- History: `CHANGELOG.md`
+- Provenance archive (verbatim): `worklogs/archive/`
+
 ## Build
 
 ```bash

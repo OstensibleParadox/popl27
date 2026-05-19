@@ -1,3 +1,4 @@
+> ARCHIVED 2026-05-19 — superseded by docs/ARCHITECTURE.md and CHANGELOG.md.
 # 2026-05-19 Bridge Memo: NeurIPS Information Theory -> POPL Information-Flow Calculus
 
 This note records the integration boundary between the NeurIPS 2026 verification

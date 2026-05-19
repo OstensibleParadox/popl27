@@ -5,6 +5,9 @@
 scratch/
 test_*.lean
 
+# Local tooling
+.claude/
+
 # macOS
 .DS_Store
 **/.DS_Store

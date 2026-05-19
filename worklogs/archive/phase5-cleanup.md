@@ -1,3 +1,4 @@
+> ARCHIVED 2026-05-19 — superseded by docs/ARCHITECTURE.md and CHANGELOG.md.
 # Phase 5: Code Quality Review & Integration Prep
 
 ## Objective
