@@ -73,6 +73,30 @@ The separate `/Users/ostensible_paradox/Documents/neurips26/verification` projec
 - **`neurips26/verification` code**: proves or structures the finite information-theoretic machinery: `FinitePMF`, entropy/CMI, conditional DPI, cut-set bounds, KKT certificates, and the linear-chain case study.
 - **Integration boundary**: this document's NeurIPS-to-POPL section records planned reuse, not nonexistent work.
 
+### Paper Track Governance
+
+**Forbidden claims policy** — enforced in all drafts targeting arXiv or POPL:
+
+| Forbidden phrase | Requires qualifier |
+|---|---|
+| "Complete integration" | `planned` / `scaffold` |
+| "Quantitative verification" | `planned` / `scaffold` |
+| "Solves QIF" | `planned` / `scaffold` |
+
+Any occurrence without the qualifier is a P0 blocking deletion.
+
+**Double-write risk** — `main_arxiv.tex` and `main.tex` share graph-semantics content but are physically separate.  
+Mitigation (ship-safe): apply any typo/formatting fix to both files manually at time of edit.  
+Deferred: extract shared content into `\input{core_semantics.tex}` after arXiv submission.
+
+**arXiv submission checkpoint** — tag the exact commit that produces the final `main_arxiv.pdf`:
+
+```bash
+git tag -a v1.0.0-arxiv-submitted -m "Zero sorries checkpoint for arXiv v1"
+```
+
+This tag is the verifiable snapshot of what was submitted; POPL revisions diverging from it are expected and acceptable.
+
 ## Module Boundaries & Invariants
 
 - `DSeparation/TraceSynthesis.lean` is aggregate-import-only: do not add declarations there.

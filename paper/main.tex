@@ -167,10 +167,11 @@ edge relation.  The key safety invariant is
 node sets.  In the language of substructural types, this is an \emph{affine
 ownership constraint}: the conditioned variables $Z$ are borrowed by the query
 and cannot alias the source $X$ or sink $Y$.
-For the extrinsic presentation, we target a first-order surface calculus with
-an explicit environment and no higher-order binders, so the metatheory stays
-focused on queries rather than substitution-heavy closure machinery.  Surface
-graphs carry a rank certificate for acyclicity, checked locally and then
+As planned future work for the POPL track---not part of this artifact---we
+target a first-order surface calculus with an explicit environment and no
+higher-order binders, so the metatheory would stay focused on queries rather
+than substitution-heavy closure machinery.  In that planned layer, surface
+graphs would carry a rank certificate for acyclicity, checked locally and then
 elaborated into intrinsic \lean{DAG}s via \lean{DAG.ofRank}.
 
 \begin{lstlisting}[caption={DAG structure and safety predicate}]
@@ -567,12 +568,15 @@ bound requires the bridge
 \text{d-separation} \;\Rightarrow\; \text{conditional independence}
 \;\Rightarrow\; \text{conditional DPI} \;\Rightarrow\; \text{cut-set bound}.
 \]
-We state the first step of this bridge as an explicit Lean scaffold,
-\lean{dSeparation_}\allowbreak\lean{implies_}\allowbreak\lean{conditional_}\allowbreak\lean{independence} in
-\lean{InfoTheoryBridge.lean}, together with stubs for \lean{FinitePMF} and
+We state the first step of this bridge as an explicit Lean scaffold in
+\lean{InfoTheoryBridge.lean}: both the conditional-independence predicate
+\lean{ConditionalIndependence} and the bridge theorem
+\lean{dSeparation_}\allowbreak\lean{implies_}\allowbreak\lean{conditional_}\allowbreak\lean{independence}
+are stubbed, alongside placeholder structures \lean{FinitePMF} and
 \lean{MarkovCompatible}.  This scaffold is deliberately \emph{not} discharged
-in this artifact: it carries two intentional \lean{sorry}s and is the sole
-proof debt in the package.  The finite-measure and information-theory
+in this artifact: it carries exactly two intentional \lean{sorry}s---the
+\lean{ConditionalIndependence} definition and the bridge theorem---and is the
+sole proof debt in the package.  The finite-measure and information-theory
 machinery (entropy, conditional mutual information, conditional DPI, dual/KKT
 certificates) lives in a separate verification stack; integrating it with the
 DAG semantics formalized here---unifying the two DAG definitions and proving
