@@ -9,22 +9,9 @@ proving that unrestricted equivalence is false.
 - Architecture & strategy: `docs/ARCHITECTURE.md`
 - History: `CHANGELOG.md`
 - Provenance archive (verbatim): `worklogs/archive/`
-- Paper critique audit and polishing notes: `worklogs/paper-polishing-log.md`
 
-## Document Roles and Expiry
-
-Use this table to decide whether a document is live guidance or provenance.
-Before archiving any active document, move unresolved action items into the
-current canonical doc or a fresh plan.
-
-| Document | Function | Expiry / archive rule |
-|---|---|---|
-| `README.md` | Front-door index: build commands, paper-track split, theorem map, and module tree. | No expiry. Keep active; review on 2026-07-10 after the POPL deadline, but do not move to `worklogs/archive/`. |
-| `CHANGELOG.md` | Append-only human-readable history of code and documentation changes. | No expiry. Keep active; do not archive individual sections unless the release process changes. |
-| `docs/ARCHITECTURE.md` | Current architecture contract: layer map, module invariants, NeurIPS-to-POPL boundary, and TODO priorities. | Review on 2026-07-10. If superseded by a final POPL appendix or newer architecture doc, move the old copy to `worklogs/archive/ARCHITECTURE-20260710.md`; otherwise refresh in place. |
-| `plans/20260519_architecture_reuse_inventory_plan.md` | Short-lived execution plan and provenance for the May 19 architecture/doc pass. | Expires 2026-05-26, or immediately after this batch is committed or abandoned. Move to `worklogs/archive/20260519_architecture_reuse_inventory_plan.md` once it stops driving active edits. |
-| `worklogs/paper-polishing-log.md` | Active critique ledger for grounded vs over-harsh paper-polishing notes. | Expires 2026-07-10. First extract unresolved TODOs into `docs/ARCHITECTURE.md` or a paper issue list, then move to `worklogs/archive/paper-polishing-log-20260710.md`. |
-| `worklogs/archive/` | Immutable archive for stale plans, audits, and provenance notes. | No expiry. Add archived files here; do not edit old entries except for mechanical path fixes. |
+Active guidance lives in `README.md`, `docs/ARCHITECTURE.md`, and `CHANGELOG.md`.
+Stale plans and audits go to `worklogs/archive/`.
 
 ## Build
 

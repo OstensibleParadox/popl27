@@ -1,5 +1,14 @@
 # Changelog
 
+## [2026-05-19] — doc cleanup
+
+### Archive/merge pass
+
+- Archived `plans/20260519_architecture_reuse_inventory_plan.md` → `worklogs/archive/20260519_architecture_reuse_inventory_plan.md`; all durable content already merged into `docs/ARCHITECTURE.md`.
+- Archived `worklogs/paper-polishing-log.md` → `worklogs/archive/20260519_paper_polishing_audit.md`; unresolved TODOs already tracked in `docs/ARCHITECTURE.md` GAP list.
+- Removed empty `plans/` directory.
+- Replaced the "Document Roles and Expiry" table in `README.md` with a one-line rule; active docs are now `README.md`, `docs/ARCHITECTURE.md`, and `CHANGELOG.md` only.
+
 ## [2026-05-19]
 
 ### Reverse synthesis closed (Phase 4/6)
