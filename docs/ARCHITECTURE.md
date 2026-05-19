@@ -15,56 +15,6 @@
 | L2: Trace Bisimulation | Verified bisimulation: certified compilation and decompilation of information traces. Forward is a certified optimizer; backward is witness decompilation. | Forward: `Trail -> BayesBallPath -> MAGWalk`. Backward: `MAGWalk -> StaticRoute -> OpenTrace -> ActiveRoute -> Trail`. | Forward + reverse pipelines are complete and closed; key reverse theorems include `route_improves_of_bad` and `activeWitness_of_not_dSeparated` (in `TraceSynthesis/Assembly.lean`). |
 | L3: Quantitative Bounds | From qualitative reachability to Shannon-style bounds (QIF / cut-set certificates). | Information-theory layer lives in the separate `neurips26` project; this repo contains the scaffold entrypoint `InfoTheoryBridge.lean`. | Not integrated yet: needs a bridge from d-separation to conditional independence plus a shared DAG foundation. |
 
-## L1 Roadmap: Pitfall-Avoiding Extrinsic Surface Calculus (Target: 2026-07-09)
-
-The current artifact enforces the key well-formedness conditions (e.g. `DisjointSets X Y Z`)
-*intrinsically* via dependent typing.  For a POPL-style presentation of an
-*extrinsic* type system ("raw AST + evaluator + typing judgment + Progress/Preservation"),
-the fastest path that avoids known Lean time-sinks is:
-
-### 1. Surface Language Boundary ("do not summon the binder demon")
-
-- **Do not** introduce higher-order binders (no `λ`, no closures).
-- Use a first-order, command-like surface language with a simple environment:
-  `let S = SetLit; let G = GraphLit; query(G, X, Y, Z)`.
-- Semantics can be big-step (`eval : Env → Term → Result`) or small-step; big-step is usually simpler here.
-
-### 2. "May-Go-Wrong" Raw Syntax (AST) + Explicit Errors
-
-- Raw graph syntax should admit ill-formed inputs (dangling edges, nodes outside `nodes`, missing certificates).
-- Raw set syntax for `X`, `Y`, `Z` plus minimal combinators needed for examples.
-- Make failures explicit as data: `BadGraph`, `NotInNodes`, `NotDisjoint`, `CycleCertRejected`, etc.
-
-### 3. Certified Acyclicity via a Rank Certificate (PCC-style speedup)
-
-- Require the surface graph to carry a **rank certificate** (e.g. `rank : ℕ → ℕ` or a topo-order witness).
-- The typechecker only verifies the local property "`rank u < rank v` for every edge (u,v)" (linear-time).
-- Elaborate validated graphs into the intrinsic `DAG` via `DAG.ofRank`.
-  This offloads the hard termination/proof burden away from "compute SCCs in Lean" and fits a proof-carrying-code story.
-
-### 4. Ownership/Disjointness Tracking: Prefer `WF` Judgments + One Key Side-Condition
-
-- Keep the story close to the paper claim "affine ownership":
-  define lightweight well-formedness judgments (`WFGraph`, `WFSet`, `WFQuery`).
-- In the `Query` typing rule, require the single critical side-condition:
-  `DisjointSets X Y Z` (and any necessary membership premises).
-  This keeps the Progress/Preservation proof lean while still explaining the repaired equivalence domain.
-
-### 5. Type Soundness (Wright--Felleisen) with Minimal Lemma Debt
-
-- Prove Preservation and Progress for the surface evaluator.
-- With the recommended first-order language, you typically avoid the heavy substitution stack:
-  environment extension lemmas replace λ-calculus substitution.
-- Conclude "well-typed programs do not go wrong" (no `stuck`, no unexpected runtime error).
-
-### 6. Elaboration to the Semantic Core ("Interpreter → Typechecker → Certified IR Extraction")
-
-- Define `elab` from well-typed surface programs into intrinsic objects (`DAG`, `X`, `Y`, `Z`, ...).
-- Prove elaboration soundness/completeness against intrinsic definitions (`dSeparates`, `DAG.dSeparated`,
-  `dSeparated_iff_dSeparates`).
-- Reuse the existing decompiler as the surface witness generator:
-  `activeWitness_of_not_dSeparated` is the intended end-to-end payload.
-
 ## PL Dictionary (Engineering-Internal)
 
 This table is an internal engineering map. For paper-ready naming and any external claim, treat the PL-mapping table in `paper/main.tex` as canonical.
