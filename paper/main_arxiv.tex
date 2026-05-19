@@ -1,6 +1,9 @@
 \documentclass[acmsmall,screen,nonacm]{acmart}
 
+\let\Bbbk\relax
 \usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\newtheorem{remark}{Remark}
 \usepackage{booktabs}
 \usepackage{listings}
 \usepackage{tikz}
@@ -41,12 +44,12 @@
 \author{Lucia Yizi Zhang}
 \affiliation{%
   \institution{Shanghai Lixin University of Accounting and Finance}
+  \country{China}
 }
 
 
 
 \begin{document}
-\maketitle
 
 \begin{abstract}
 D-separation is the central graph-theoretic criterion for reading conditional
@@ -79,6 +82,7 @@ quantitative information-flow bounds; the bridge to probabilistic conditional
 independence is stated as an explicit scaffold and is \emph{not} discharged in
 this artifact.
 \end{abstract}
+\maketitle
 
 \section{Introduction}\label{sec:intro}
 
@@ -168,6 +172,11 @@ edge relation.  The key safety invariant is
 node sets.  In the language of substructural types, this is an \emph{affine
 ownership constraint}: the conditioned variables $Z$ are borrowed by the query
 and cannot alias the source $X$ or sink $Y$.
+For the extrinsic presentation, we target a first-order surface calculus with
+an explicit environment and no higher-order binders, so the metatheory stays
+focused on queries rather than substitution-heavy closure machinery.  Surface
+graphs carry a rank certificate for acyclicity, checked locally and then
+elaborated into intrinsic \lean{DAG}s via \lean{DAG.ofRank}.
 
 \begin{lstlisting}[caption={DAG structure and safety predicate}]
 structure DAG where
@@ -530,17 +539,23 @@ Cut-Set / Mutual Information & Quantitative Information Flow (QIF) capacity boun
 \label{tab:dictionary}
 \end{table}
 
-\section{Related Work and Future Directions}\label{sec:related}
+\section{Related Work}
+\label{sec:related}
 
-\paragraph{Causal inference formalization.} Causal reasoning has been formalized
-in Isabelle/HOL, Coq, and recently in Lean~4.  To our knowledge, no prior
-formalization treats the endpoint caveat, gives a machine-checked counterexample
-to unrestricted equivalence, or provides a constructive reverse decompiler.
+Our mechanization sits at the intersection of causal inference, mechanized probabilistic semantics, and verified compilation. We briefly survey the most closely related lines of work.
 
-\paragraph{Graph theory in proof assistants.} Mathlib~4 contains a mature
-\lean{SimpleGraph} library.  Our DAG definition is more algorithmic (finite
-node/edge sets, well-founded acyclicity) than the algebraic approach typical of
-Mathlib, making it convenient for constructive computation and witness extraction.
+\paragraph{Mechanized Causal Inference and D-Separation.}
+Formalizing the graph-theoretic foundations of causal inference is an active frontier. Recently, Chancelier, De Lara, and Heymann~(2024) \cite{chancelier2024conditional} mechanized d-separation as a binary relation using Coq and MathComp/SSReflect, providing a relational-algebraic treatment of graphical separation. Parallel to our work, Anna Zhang~(2025) \cite{zhang2025formalizing} formalized the semantics of conditional independence and d-separation in Coq, bridging structural properties with function-based definitions for experimental design.
+
+Both developments adopt standard mathematical formulations without exposing the implicit textbook domain caveats. Our work contributes the first formalized counterexample and repair (the endpoint caveat) for the gap between syntactic trails and moralized node-deletion. We also shift from purely relational verification to a constructive bisimulation that generates executable IRs (e.g., \lean{OpenTrace}), optimized in Lean~4 for computational witness synthesis.
+
+\paragraph{Categorical and Topological D-Separation.}
+Fritz and Klingler~(2023) \cite{fritz2023dseparation}, extending work by Fritz and Liang~(2023) \cite{fritz2023free}, abstracted d-separation using string diagrams in Markov categories. Their framework bypasses moralization, reading conditional independence directly from topological connectedness in a generalized measure-theoretic space. Our approach is complementary: Markov categories provide a general topological theory, while our artifact targets the legacy operational graph definitions (moral graphs and trace trails) implemented in existing software. By defining \lean{DisjointSets} as an affine ownership type, we show that classical d-separation behaves like a resource-restricted syntax within a broader categorical structure.
+
+\paragraph{Verified Trace Bisimulation and Witness Extraction.}
+The forward pipeline (soundness) translates unbounded trace semantics into a compressed step-relation (\lean{MAGWalk}), analogous to the semantics-preserving translations in Leroy's CompCert~(2009) \cite{leroy2009formal}. The reverse pipeline (completeness) deterministically unwinds reachability into a certified active trail, resembling Necula's Proof-Carrying Code~(1997) \cite{necula1997proof}: instead of returning a boolean assertion of an information leak, our decompiler synthesizes an explicit, machine-checkable exploitability certificate. This provides a graph-theoretic substrate for future verified static analyzers of quantitative information flow.
+
+\subsection{Future Directions}
 
 \paragraph{Quantitative Information Flow (QIF).} Security analysis has moved
 from non-interference (``0 or 1'') to measuring leak in bits.  The verified
