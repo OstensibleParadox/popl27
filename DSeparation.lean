@@ -11,6 +11,7 @@ import DSeparation.ActiveRoute
 import DSeparation.Reverse
 import DSeparation.Counterexample
 import DSeparation.Examples
+import DSeparation.InfoTheoryBridge
 
 /-! # DSeparation
 
@@ -21,11 +22,12 @@ Root module for the d-separation formalization. This library provides:
 - Trail blocking and the active-trail predicate
 - Bayes-ball state-machine compilation from active trails
 - `MAGWalk` as a compressed walk language equivalent to moral-graph reachability
-- Soundness theorem: `DAG.dSeparated → dSeparates` under `DisjointSets X Y Z`
+- Grand Equivalence Theorem: `DAG.dSeparated ↔ dSeparates` under `DisjointSets X Y Z`
+- Reverse witness-synthesis pipeline for constructive active-trail generation
 - Concrete counterexample showing unrestricted equivalence is false
-- Reverse witness-synthesis workspace in `DSeparation.TraceSynthesis`
+- Scaffold for the Information-Theory bridge to probabilistic conditional independence
 
-The reverse workspace is under active Phase 4 proof construction.  Current
-working targets are `exists_split` in `DSeparation/TraceSynthesis/Split.lean`
-and `escape_path_survives` in `DSeparation/TraceSynthesis/Graph.lean`.
+The core d-separation theory and Reverse Synthesis pipeline are **fully proved
+and verified**.  `InfoTheoryBridge.lean` is an explicit scaffold for the next
+integration layer and currently carries the probability-semantics proof debt.
 -/

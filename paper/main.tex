@@ -79,8 +79,8 @@ direction, we give a \emph{decompiler of semantic flow}: from moral-graph
 reachability we deterministically reconstruct an explicit active-trail witness
 ($\text{StaticRoute} \to \text{OpenTrace} \to \text{ActiveRoute} \to
 \exists\,\text{Trail},\;\neg\text{isBlocked}$).  The decompiler is fully
-constructive except for one normalization lemma whose proof debt is isolated
-and precisely characterized.
+constructive; its normalization argument is closed by a strict bad-collider
+improvement theorem.
 
 We also construct and machine-check the first mechanized counterexample to
 unrestricted equivalence, showing that the endpoint treatment is the sole
@@ -143,8 +143,8 @@ Our contributions are:
     decompilation pipeline
     $\text{Reachable} \to \text{StaticRoute} \to \text{OpenTrace} \to
     \text{ActiveRoute} \to \exists\,\text{Trail},\;\neg\text{isBlocked}$.
-    Every stage is type-valued and constructive; the only remaining proof debt
-    is isolated in a single normalization lemma.
+    Every stage is type-valued and constructive; the normalization lemma is
+    closed in the current Lean development.
 \end{enumerate}
 
 All results are available as a standalone Lean~4 package.  The decompiler
@@ -426,14 +426,13 @@ theorem normalized_route_exists_of_improves
     \exists w, routeBadCount w = 0
 \end{lstlisting}
 
-The remaining proof debt is isolated in the improvement lemma:
+The improvement lemma is the core normalization theorem:
 
-\begin{lstlisting}[caption={The sole remaining proof debt}]
+\begin{lstlisting}[caption={Strict improvement for non-normalized routes}]
 theorem route_improves_of_bad
     (w : StaticRouteWitness G X Y Z) (hbad : routeBadCount w \neq 0) :
     \exists w' : StaticRouteWitness G X Y Z,
-      routeBadCount w' < routeBadCount w := by
-  sorry   -- isolated proof debt
+      routeBadCount w' < routeBadCount w
 \end{lstlisting}
 
 The argument sketch is: (1)~extract the first bad collider; (2)~use the

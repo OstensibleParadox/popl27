@@ -2,6 +2,7 @@ import DSeparation.ActiveRoute
 import DSeparation.TraceSynthesis.StaticRoute
 
 open Finset
+open Classical
 
 namespace DSeparation
 
@@ -49,19 +50,27 @@ def activeRoute_of_openTrace {G : DAG} {Z : Finset ℕ} {s t : ℕ × TrailDir}
     (p : OpenTrace G Z s t) : ActiveRoute G Z s t :=
   p.toActiveRoute
 
+/-- Check if a single step is a bad collider given an arrival direction. -/
+def isStepBad {G : DAG} {X Y Z : Finset ℕ} {u v : ℕ}
+    (arrival : TrailDir) (step : StaticStep G X Y Z u v) : Prop :=
+  match step with
+  | .directForward _ _ _ => False
+  | .directBackward _ _ _ => arrival = TrailDir.into ∧ Disjoint ({u} ∪ descendants G u) Z
+  | @StaticStep.moralJump _ _ _ _ _ _ w _ _ _ _ _ _ => Disjoint ({w} ∪ descendants G w) Z
+
 /-- Count bad collider obligations created by expanding a static route. -/
 noncomputable def countBadColliders {G : DAG} {X Y Z : Finset ℕ} {x y : ℕ}
     (arrival : TrailDir) (route : StaticRoute G X Y Z x y) : ℕ :=
   match route with
   | StaticRoute.nil _ => 0
   | StaticRoute.cons step rest =>
-      let stepBad : ℕ := match step with
-        | StaticStep.directForward .. => 0
-        | StaticStep.directBackward .. =>
-            if arrival = TrailDir.into ∧ Disjoint ({x} ∪ descendants G x) Z then 1 else 0
-        | StaticStep.moralJump (w := w) .. =>
-            if Disjoint ({w} ∪ descendants G w) Z then 1 else 0
-      stepBad + countBadColliders step.nextArrival rest
+      (if isStepBad arrival step then 1 else 0) + countBadColliders step.nextArrival rest
+
+lemma countBadColliders_cons {G : DAG} {X Y Z : Finset ℕ} {u v w : ℕ}
+    (arrival : TrailDir) (step : StaticStep G X Y Z u v) (rest : StaticRoute G X Y Z v w) :
+    countBadColliders arrival (StaticRoute.cons step rest) =
+      (if isStepBad arrival step then 1 else 0) + countBadColliders step.nextArrival rest := by
+  rfl
 
 /-- Bad collider count is additive over route append. -/
 lemma countBadColliders_append {G : DAG} {X Y Z : Finset ℕ} {u v w : ℕ}
@@ -93,7 +102,7 @@ lemma countBadColliders_ofBackwardReachable_eq_zero
           cases hreach with
           | refl => contradiction
           | tail h1 h2 => exact ⟨_, h1, h2⟩)
-        simp [countBadColliders, StaticStep.nextArrival]
+        simp [countBadColliders, isStepBad, StaticStep.nextArrival]
         apply ih step.val step.property.2
 
 /-- Forward reachable chains have no bad colliders. -/
@@ -115,7 +124,7 @@ lemma countBadColliders_ofForwardReachable_eq_zero
           cases hreach with
           | refl => contradiction
           | tail h1 h2 => exact ⟨_, h1, h2⟩)
-        simp [countBadColliders_append, countBadColliders]
+        simp [countBadColliders_append, countBadColliders, isStepBad]
         apply ih step.val step.property.2
 
 /-- Backward reachable chains starting with `outOf` maintain `outOf` arrival. -/
@@ -152,7 +161,7 @@ lemma countBadColliders_backwardEscape_append_suffix_lt {G : DAG} {X Y Z : Finse
       < 1 + countBadColliders TrailDir.outOf suf := by
   rw [countBadColliders_append, countBadColliders_ofBackwardReachable_eq_zero hreach hnodes]
   rw [finalArrival_ofBackwardReachable hreach hnodes]
-  simp [countBadColliders, StaticStep.nextArrival]
+  simp [countBadColliders, isStepBad, StaticStep.nextArrival]
 
 /-- Rerouting to Y strictly decreases bad-collider count. -/
 lemma countBadColliders_prefix_append_forwardEscape_lt {G : DAG} {X Y Z : Finset ℕ}
@@ -169,7 +178,7 @@ lemma countBadColliders_prefix_append_forwardEscape_lt {G : DAG} {X Y Z : Finset
         (StaticRoute.ofForwardReachable hreach hnodes)))
       < 1 + countBadColliders TrailDir.outOf pre := by
   rw [countBadColliders_append, hpre]
-  simp [countBadColliders, StaticStep.nextArrival, countBadColliders_ofForwardReachable_eq_zero]
+  simp [countBadColliders, isStepBad, countBadColliders_ofForwardReachable_eq_zero]
 
 /-- A forward direct step never creates a collider at its source. -/
 lemma not_directionalTripleBlocked_forward_of_not_mem_Z {G : DAG} {Z : Finset ℕ}
@@ -204,7 +213,7 @@ theorem openTrace_of_countBadColliders_zero {G : DAG} {X Y Z : Finset ℕ} {x y 
           have hnotBad :
               ¬ (arrival = TrailDir.into ∧ Disjoint ({src} ∪ descendants G src) Z) := by
             intro h
-            simp [countBadColliders, h] at hzero
+            simp [countBadColliders, isStepBad, h] at hzero
             have hsrcZ : src ∉ Z := by
               intro hsrcMemZ
               exact (Finset.disjoint_left.mp h.2 (by simp)) hsrcMemZ
@@ -237,7 +246,7 @@ theorem openTrace_of_countBadColliders_zero {G : DAG} {X Y Z : Finset ℕ} {x y 
           rename_i child
           have hdis : ¬ Disjoint ({child} ∪ descendants G child) Z := by
             intro h
-            simp [countBadColliders] at hzero
+            simp [countBadColliders, isStepBad] at hzero
             have hchildZ : child ∉ Z := by
               intro hchildMemZ
               exact (Finset.disjoint_left.mp h (by simp)) hchildMemZ

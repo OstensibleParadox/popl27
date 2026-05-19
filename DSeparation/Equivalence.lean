@@ -1,4 +1,5 @@
 import DSeparation.MAGWalk
+import DSeparation.TraceSynthesis.Assembly
 
 open Finset
 
@@ -12,6 +13,9 @@ The main soundness (completeness) result: under the pairwise-disjoint domain
 (`DisjointSets X Y Z`), if the moralized ancestral graph separates `X` from `Y`
 after deleting `Z` (`DAG.dSeparated`), then every trail from `X` to `Y` is
 blocked by `Z` (`dSeparates`).
+
+Conversely, if separation fails, the reverse trace synthesis pipeline
+constructs a certified active trail witness.
 -/
 
 theorem dSeparationGraph_reachable_of_active_trail_disjoint
@@ -113,6 +117,29 @@ theorem dSeparated_of_dSeparated_disjoint
     (hXYZ : DisjointSets X Y Z)
     (hsep : DAG.dSeparated G X Y Z) : dSeparates G X Y Z := by
   exact dsep_complete_of_endpoint_disjoint hXYZ.2.1 hXYZ.2.2 hsep
+
+/-- If an active witness exists, then X and Y are not d-separated by Z. -/
+theorem activeWitness_implies_not_dSeparates {G : DAG} {X Y Z : Finset ℕ}
+    (w : ActiveWitness G X Y Z) : ¬ dSeparates G X Y Z := by
+  rcases w with ⟨x, hx, y, hy, d, ⟨route⟩⟩
+  rcases ActiveRoute.to_activeTrail route with ⟨tr, h_active⟩
+  intro hsep
+  exact h_active (hsep x hx y hy tr)
+
+/-- **Full equivalence of d-separation under pairwise-disjoint domain.**
+    `X`, `Y`, and `Z` are pairwise disjoint (`DisjointSets X Y Z`).
+    The moralized ancestral graph separates `X` from `Y` after deleting `Z`
+    (`DAG.dSeparated G X Y Z`) if and only if every trail from `X` to `Y`
+    is blocked by `Z` (`dSeparates G X Y Z`). -/
+theorem dSeparated_iff_dSeparates
+    {G : DAG} {X Y Z : Finset ℕ} (hXYZ : DisjointSets X Y Z) :
+    DAG.dSeparated G X Y Z ↔ dSeparates G X Y Z := by
+  constructor
+  · exact dSeparated_of_dSeparated_disjoint hXYZ
+  · intro hsep
+    by_contra hnot
+    have hwit := activeWitness_of_not_dSeparated hnot
+    exact (activeWitness_implies_not_dSeparates hwit) hsep
 
 end
 

@@ -14,7 +14,7 @@ lake build
 Pinned by `lean-toolchain` and `lake-manifest.json`.
 
 ```bash
-lake build   # all ~8300 jobs typecheck
+lake build   # all ~8300 jobs typecheck; InfoTheoryBridge currently emits scaffold sorry warnings
 lake build DSeparation.TraceSynthesis  # reverse-direction workspace
 ```
 
@@ -57,6 +57,10 @@ submodule under `DSeparation/TraceSynthesis/`.
 | Zero-bad-collider route → open trace | `DSeparation/TraceSynthesis/OpenTrace.lean` | `openTrace_of_countBadColliders_zero` |
 | Zero-bad-collider route → active witness | `DSeparation/TraceSynthesis/OpenTrace.lean` | `activeRoute_of_countBadColliders_zero`, `activeTrail_of_countBadColliders_zero` |
 | Minimal bad-collider witness wrapper | `DSeparation/TraceSynthesis/MinimalWitness.lean` | `StaticRouteWitness`, `minRouteBadCountWitness`, `normalized_route_exists_of_improves` |
+| First bad-collider extraction | `DSeparation/TraceSynthesis/Split.lean` | `exists_split` |
+| Bad-collider route improvement | `DSeparation/TraceSynthesis/Assembly.lean` | `route_improves_of_bad` |
+| Moral reachability → active witness | `DSeparation/TraceSynthesis/Assembly.lean` | `activeWitness_of_not_dSeparated` |
+| Full d-separation equivalence | `DSeparation/Equivalence.lean` | `dSeparated_iff_dSeparates` |
 
 ## Module Structure
 
@@ -78,12 +82,13 @@ DSeparation/
 ├── TraceSynthesis.lean         -- aggregate import for reverse synthesis
 ├── TraceSynthesis/
 │   ├── Graph.lean              -- graph lemmas used by normalization
-│   ├── StaticRoute.lean        -- static route IR and moral reachability bridge
-│   ├── OpenTrace.lean          -- local-open trace compiler and active-route bridge
+│   ├── StaticRoute.lean        -- static route IR, append lemmas, reachability bridge
+│   ├── OpenTrace.lean          -- bad-collider counts, local-open trace compiler
 │   ├── MinimalWitness.lean     -- bad-collider minimality wrapper
-│   ├── Split.lean              -- first-bad-collider splitter interface
+│   ├── Split.lean              -- first-bad-collider extraction
 │   └── Assembly.lean           -- final reverse-direction assembly
 ├── Reverse.lean                -- singleton moral-adjacency active-trail witnesses
+├── InfoTheoryBridge.lean       -- scaffold for d-separation → conditional independence
 ├── Counterexample.lean         -- concrete counterexample
 └── Examples.lean               -- checkable DAG instances (chain3, fork3, collider3)
 ```
@@ -109,8 +114,7 @@ pdflatex main.tex   # compiles to main.pdf
 - **Layered reverse synthesis**: `TraceSynthesis` is split into graph lemmas,
   static route IR, open-trace compilation, minimal-witness selection, and final
   assembly.  The aggregate `DSeparation.TraceSynthesis` import remains stable.
-- **Proof-work status**: Phase 4 is actively being proved.  The current working
-  area is `TraceSynthesis/Split.lean` (`exists_split`) plus
-  `TraceSynthesis/Graph.lean` (`escape_path_survives`).  Do not overwrite those
-  files or assume the reverse workspace is in a clean rebuild state while a proof
-  attempt is in progress.
+- **Verification status**: The core d-separation and reverse-synthesis theory is
+  **fully proved and verified**. `lake build DSeparation.TraceSynthesis` is
+  green with no `sorry`s. The top-level `lake build` also succeeds, with two
+  intentional scaffold `sorry` warnings in `InfoTheoryBridge.lean`.

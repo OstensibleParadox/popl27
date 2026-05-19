@@ -42,17 +42,18 @@
 
 | 子模块 | 职责 |
 |--------|------|
-| `TraceSynthesis/StaticRoute.lean` | `StaticStep` / `StaticRoute` IR；从 `dSeparationGraph.Reachable` 反编译到显式证据；`toMAGWalk`、`ofDSeparationGraphAdj`、`ofDSeparationGraphWalk`。 |
-| `TraceSynthesis/OpenTrace.lean` | `OpenTrace` 编译目标（局部非阻塞证明）；`countBadColliders`；`openTrace_of_countBadColliders_zero`（零坏对撞子 ⇒ OpenTrace）；`toActiveRoute`。 |
+| `TraceSynthesis/StaticRoute.lean` | `StaticStep` / `StaticRoute` IR；从 `dSeparationGraph.Reachable` 反编译到显式证据；`toMAGWalk`、`ofDSeparationGraphAdj`、`ofDSeparationGraphWalk`；通用 `append_nil` / `append_assoc` 结构引理。 |
+| `TraceSynthesis/OpenTrace.lean` | `OpenTrace` 编译目标（局部非阻塞证明）；`isStepBad`、`countBadColliders`、`countBadColliders_cons`；`openTrace_of_countBadColliders_zero`（零坏对撞子 ⇒ OpenTrace）；`toActiveRoute`。 |
 | `TraceSynthesis/MinimalWitness.lean` | 端点携带的 witness；`minRouteBadCountWitness`（`Nat.find` 包装器）；`normalized_route_exists_of_improves`。 |
-| `TraceSynthesis/Assembly.lean` | 最终拼装；唯一的 proof debt 是 `route_improves_of_bad`（`sorry`）。 |
-| `TraceSynthesis/Graph.lean` | `ancestor_escape`（rerouting 的核心图论引理）。 |
+| `TraceSynthesis/Split.lean` | `exists_split`：从非零坏对撞子计数中抽取第一处 bad collider；本模块只保留专用 splitter 逻辑。 |
+| `TraceSynthesis/Assembly.lean` | 最终拼装；`route_improves_of_bad` 与 `activeWitness_of_not_dSeparated` 已闭合。 |
+| `TraceSynthesis/Graph.lean` | `ancestor_escape`、`bad_child_survives`、`escape_path_survives`（rerouting 的核心图论引理）。 |
 | `TraceSynthesis.lean` | **聚合入口，只做 import，不声明。** |
 
 - **Forward（编译 / 抽象解释）**：给定操作语义级的凌乱微小轨迹（`Trail`），编译器通过 `BayesBall` 追踪方向状态（Typestate），**消除冗余变量（Colliders）**，优化并投射成更致密的 IR（`MAGWalk`）。关键定理：`dSeparationGraph_reachable_of_active_trail_disjoint`（`Equivalence.lean`）。
 - **Backward（反编译 / 漏洞路径重建）**：当抽象层断言连通（存在数据流泄露风险），反编译器必须从被优化后的骨架图（MAG Graph）中**确定性地重构（Deterministically reconstruct）**一条原始代码级别的渗透攻击路线（`Active Trail Witness`）。关键定理链：`Reachable → StaticRoute → NormalizedStaticRoute → OpenTrace → ActiveRoute → ∃ Trail, ¬isBlocked`。在漏洞检测分析界，这就是传说中的"漏洞可利用性证明（Exploitability Certificate Generation）"。
 
-**proof debt**：`TraceSynthesis/Assembly.lean:19` 的 `route_improves_of_bad` 仍是唯一 `sorry`。填上它之后，反向 decompiler 就完全闭合。
+**证明状态**：`TraceSynthesis` 反向 decompiler 已闭合。`route_improves_of_bad` 不再是 proof debt；当前 `lake build DSeparation.TraceSynthesis` 通过且无 `sorry`。新的 proof debt 边界已转移到 `InfoTheoryBridge.lean`，其中两个 `sorry` 是概率语义桥的显式 scaffold。
 
 ---
 
@@ -73,7 +74,7 @@
 - `IdentifiabilityGap.lean`：行为等价但审计不等价的有限 PMF 构造（Theorem 1，axiom-free）。
 
 **真正缺的是桥，不是从零开始的信息论**：
-- [ ] 先闭合 `popl27` 的图论双向等价，尤其是 `route_improves_of_bad`。
+- [x] 闭合 `popl27` 的图论双向等价与反向 witness decompiler，包括 `route_improves_of_bad`。
 - [ ] 建立共同基础层，消除 `neurips26` 与 `popl27` 中几乎同构但物理隔离的 DAG 定义。
 - [ ] 形式化 `d-separation ⇒ conditional independence`，即从图论语义进入概率图模型语义。
 - [ ] 用这个桥替换 `neurips26` 中 cut-set capacity inequality 相关的外部 axiom（`neurips26` 中标记 **C/E** 的项）。
@@ -106,16 +107,16 @@
 - **还需构建**：小型表面语言 + 类型检查器 + "类型正确 ⇒ `DisjointSets`" 的证明。约 2–3 周 Lean 开发。
 
 #### 第二层：中间编解码器
-- **已有资产**：`TraceSynthesis/` 五子模块已完成职责分离和模块化重构。
+- **已有资产**：`TraceSynthesis/` 子模块已完成职责分离和 Phase 5 模块化清理。
   - 正向：`Equivalence.lean` 已证明 `dSeparated → dSeparates`（`DisjointSets` 下）。
-  - 反向：`StaticRoute → OpenTrace → ActiveRoute → Trail` 管线完整，只差 `route_improves_of_bad`。
-- **还需构建**：填上 `Assembly.lean:19` 的 `sorry`；用 "Bisimulation" 语言包装正向/逆向引理（1–2 周）。
+  - 反向：`StaticRoute → OpenTrace → ActiveRoute → Trail` 管线完整，`activeWitness_of_not_dSeparated` 已由 `route_improves_of_bad` 驱动闭合。
+- **还需构建**：用 "Bisimulation" 语言包装正向/逆向引理；继续推进 `InfoTheoryBridge.lean` 的概率语义桥（`d-separation ⇒ conditional independence`）。
 
 #### 第三层：高层量化度量
 - **已有资产**：`neurips26/verification` 中的完整信息论层（`InfoTheory.lean`、`DualCertificate.lean`、`ChannelCapacity.lean` 等）。
 - **真正缺口**：图论到信息论的桥——`d-separation ⇒ conditional independence ⇒ MI 截断`。
-- **执行顺序**：先闭合 `popl27` 图论（填 `sorry`）→ 统一 DAG 基础层 → 建桥 → 替换 `neurips26` 的 **C/E** axiom。
+- **执行顺序**：已闭合 `popl27` 图论 → 统一 DAG 基础层 → 建桥 → 替换 `neurips26` 的 **C/E** axiom。
 
 ---
 
-*Last updated: 2026-05-19. Reflects post-refactor `TraceSynthesis/` subdirectory structure and current proof debt at `Assembly.lean:19`.*
+*Last updated: 2026-05-19. Reflects Phase 5 cleanup: `TraceSynthesis` is closed; current proof debt is isolated to the `InfoTheoryBridge.lean` scaffold.*

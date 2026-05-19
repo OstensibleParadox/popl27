@@ -11,7 +11,7 @@ decompilation; it is not the whole project identity.
 | Layer | Asset | Status |
 |---|---|---|
 | Type-safe graph syntax | `DAG`, `DisjointSets` | Present in `popl27`; a surface AST/typechecker would be future paper packaging. |
-| Trace semantics / core IR | `Trail -> BayesBallPath -> MAGWalk` and `StaticRoute -> OpenTrace -> ActiveRoute` | Almost complete in `popl27`; Phase 4 proof work is active. |
+| Trace semantics / core IR | `Trail -> BayesBallPath -> MAGWalk` and `StaticRoute -> OpenTrace -> ActiveRoute` | Complete in `popl27`; Phase 4 normalization and Phase 5 cleanup are closed. |
 | Quantitative information flow | `FinitePMF`, entropy, KL, CMI, conditional DPI, dual/KKT certificates | Present in `neurips26/verification`; not imported by `popl27`. |
 
 The two codebases are physically separate Lake projects.  Their DAG definitions
@@ -34,7 +34,7 @@ Actual file:
 DSeparation/TraceSynthesis/Assembly.lean
 ```
 
-Phase 4 is currently being worked in:
+The Phase 4 helper work is closed in:
 
 ```text
 DSeparation/TraceSynthesis/Split.lean   -- exists_split
@@ -61,20 +61,18 @@ aggregate import.
 | Module | Responsibility |
 |---|---|
 | `TraceSynthesis/Graph.lean` | Graph-only facts needed by normalization, currently `ancestor_escape`. |
-| `TraceSynthesis/StaticRoute.lean` | Static IR, MAG-walk bridge, d-separation graph reachability decompilation. |
-| `TraceSynthesis/OpenTrace.lean` | `OpenTrace`, `countBadColliders`, zero-bad route compiler. |
+| `TraceSynthesis/StaticRoute.lean` | Static IR, append lemmas, MAG-walk bridge, d-separation graph reachability decompilation. |
+| `TraceSynthesis/OpenTrace.lean` | `OpenTrace`, `isStepBad`, `countBadColliders`, zero-bad route compiler. |
 | `TraceSynthesis/MinimalWitness.lean` | `StaticRouteWitness`, bad-count minimization, contradiction wrapper. |
-| `TraceSynthesis/Split.lean` | First-bad-collider extraction and count interface; actively being proved. |
-| `TraceSynthesis/Assembly.lean` | Final theorem wiring; avoid expanding this while Phase 4 helpers are working. |
+| `TraceSynthesis/Split.lean` | First-bad-collider extraction and count interface. |
+| `TraceSynthesis/Assembly.lean` | Final theorem wiring: `route_improves_of_bad`, `activeWitness_of_not_dSeparated`. |
 | `DAG/Reachability.lean` | Shared graph reachability facts, including `DAG.target_mem_nodes_of_reachable`. |
 
-## Rerouting Proof Plan
+## Completed Rerouting Components
 
-Handoff for the next Codex window: do not try to prove
-`route_improves_of_bad` directly.  First build the small route-construction and
-bad-count lemmas below, in this order.  Use
-`scratch/lean-experiments/test_reroute_next.lean` for experiments, then move
-stable declarations into the named modules.
+This section is retained as implementation rationale.  The plan has been
+completed: directed-chain constructors, bad-count lemmas, splitter extraction,
+graph survival, and final assembly all build in `DSeparation.TraceSynthesis`.
 
 Regression command after every moved lemma:
 
@@ -305,12 +303,11 @@ d-separation
 
 ## Priority Order
 
-1. Continue `exists_split` in `TraceSynthesis/Split.lean` and
-   `escape_path_survives` in `TraceSynthesis/Graph.lean`.
+1. Treat `TraceSynthesis` as the closed graph-semantics and witness-extraction
+   core.
 2. Keep `popl27` focused on the information-flow core calculus: typed query
    well-formedness, trace optimization, and witness decompilation.
-3. Only after the d-separation equivalence is closed, create an integration
-   layer for the `neurips26` and `popl27` DAG definitions.
+3. Create an integration layer for the `neurips26` and `popl27` DAG definitions.
 4. Then formalize `d-separation -> conditional independence`.
 5. Finally replace NeurIPS cut-set capacity axioms with theorem-level proofs.
 
@@ -329,11 +326,11 @@ d-separation
 - **Step 3 (Count Invariants):** `countBadColliders_append` and strict reduction lemmas for X and Y reroutes are proved.
 - **Step 4 & 5 (Assembly):** `route_improves_of_bad` is structurally complete in `Assembly.lean`, successfully using the `Split` interface to close numerical goals.
 
-### Technical Hurdles & Current Debt
-- **Splitter Implementation (Step 2):** Card in `DSeparation/TraceSynthesis/Split.lean`.
-    - **Issue:** Decomposing the tail of a `StaticRoute G X Y Z x a` to find the predecessor of a bad junction junction (`u -> v <- w`) is causing significant dependent type issues (`HEq`) and pattern matching failures.
-    - **Strategy:** Transition from evidence-carrying recursion to induction on path length, using a simpler index-based search to identify the split point.
+### Technical Hurdles Resolved
+- **Splitter Implementation (Step 2):** `exists_split` is proved in `DSeparation/TraceSynthesis/Split.lean`.
+    - The dependent-type mismatch was resolved by length induction and by constructing the absorbed prefix state (`pre'`, `hpre'`, `hroute'`) outside recursive calls.
 - **Graph Survival:** `bad_child_survives` and `escape_path_survives` are proved in `Graph.lean`, correctly utilizing the descendant cone property to avoid set Z.
+- **Phase 5 cleanup:** structural route lemmas now live in `StaticRoute.lean`; bad-collider count facts now live in `OpenTrace.lean`; `Reverse.lean` uses `DAG.target_mem_nodes_of_reachable`.
 
 ## Phase 4 Completion (2026-05-19 Night)
 

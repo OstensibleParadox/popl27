@@ -106,6 +106,20 @@ def append {G : DAG} {X Y Z : Finset ℕ} {u v w : ℕ}
   | nil _ => q
   | cons step rest => cons step (rest.append q)
 
+lemma append_nil {G : DAG} {X Y Z : Finset ℕ} {x y : ℕ}
+    (route : StaticRoute G X Y Z x y) :
+    route.append (StaticRoute.nil y) = route := by
+  induction route with
+  | nil _ => rfl
+  | cons _ _ ih => dsimp [append]; rw [ih]
+
+lemma append_assoc {G : DAG} {X Y Z : Finset ℕ} {x y z w : ℕ}
+    (p : StaticRoute G X Y Z x y) (q : StaticRoute G X Y Z y z) (r : StaticRoute G X Y Z z w) :
+    (p.append q).append r = p.append (q.append r) := by
+  induction p with
+  | nil _ => rfl
+  | cons step rest ih => dsimp [append]; rw [ih]
+
 /-- Length of a static route, measured in static steps. -/
 def length {G : DAG} {X Y Z : Finset ℕ} {u v : ℕ}
     (route : StaticRoute G X Y Z u v) : ℕ :=

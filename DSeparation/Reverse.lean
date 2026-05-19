@@ -26,15 +26,6 @@ lemma not_reachable_source_of_hasEdge {G : DAG} {u v : ℕ}
     Relation.TransGen.head' h hreach
   exact (not_transGen_self_of_wellFounded G.acyclic u) hcycle
 
-lemma mem_nodes_of_reachable {G : DAG} {u v : ℕ}
-    (hreach : Reachable G u v) (hu : u ∈ G.nodes) :
-    v ∈ G.nodes := by
-  induction hreach with
-  | refl =>
-      exact hu
-  | tail _ hstep ih =>
-      exact (G.edges_subset hstep).2
-
 end DAG
 
 lemma not_trailBlocked_two {G : DAG} {Z : Finset ℕ} {a b : ℕ} :
@@ -95,7 +86,7 @@ lemma not_disjoint_descendants_of_reachable
     simp
   · exact Finset.mem_union.mpr <| Or.inr <|
       Finset.mem_filter.mpr
-        ⟨DAG.mem_nodes_of_reachable hreach hwG, hzw, hreach⟩
+        ⟨DAG.target_mem_nodes_of_reachable hreach hwG, hzw, hreach⟩
 
 lemma exists_conditioned_descendant_of_singleton_moral_child
     {G : DAG} {Z : Finset ℕ} {u v w : ℕ}

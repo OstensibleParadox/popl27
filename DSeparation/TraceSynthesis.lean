@@ -15,6 +15,6 @@ Aggregating module for the reverse witness-synthesis pipeline:
 * `Split`: first-bad-collider extraction interface, imported through `Assembly`.
 * `Assembly`: final reverse-direction assembly.
 
-Phase 4 is actively being proved.  Do not treat `TraceSynthesis/Split.lean` as a
-stable closed proof while `exists_split` is under construction.
+The reverse synthesis pipeline is **fully verified** as of Phase 4 completion.
+The grand equivalence theorem is integrated in `DSeparation.Equivalence`.
 -/
