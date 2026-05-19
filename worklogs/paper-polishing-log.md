@@ -82,3 +82,54 @@ Argument Skeleton
 
 ```
 
+# Tue 19 May 19:56
+# Source-grounded correction after checking ARCHITECTURE.md, neurips26/verification, and DSeparation
+
+The first pass above was useful as an adversarial writing review, but several
+items were too harsh because it had not checked the architecture and NeurIPS
+verification sources it named.
+
+## Grounded critiques to keep
+
+- The optimizer/decompiler/semantic-flow slogans are repeated too often. Keep
+  the framing, but reduce repeated slogan phrases after the abstract/intro.
+- The QIF/security bridge must stay explicitly scoped. In `popl27`, the bridge
+  is `InfoTheoryBridge.lean` and still has two intentional scaffold `sorry`s.
+- The paper needs an appendix or appendix-like artifact for POPL: theorem
+  dependency sketches, proof-status table, and explicit current-vs-planned
+  boundary.
+- "First mechanized" and "sole culprit" should be scoped carefully as paper
+  novelty claims, not treated as Lean facts.
+
+## Corrections to the harsh critique
+
+- The first-order surface calculus is not a dishonesty issue. It is POPL-facing
+  future work tied to the original bisimulation design. `paper/main.tex` is the
+  POPL 2027 track with 50+ days before the July 9, 2026 deadline; it may carry
+  planned architecture if the current-code boundary is explicit. `paper/main_arxiv.tex`
+  is the arXiv-facing artifact for immediate release and should describe only
+  current assets plus clearly marked future work.
+- "QIF is only a scaffold" is incomplete. `popl27` contains the d-separation /
+  graph-semantics core and `InfoTheoryBridge.lean` as the integration scaffold.
+  `/Users/ostensible_paradox/Documents/neurips26/verification` contains the
+  actual QIF/security machinery: finite PMFs, entropy/CMI, conditional DPI,
+  cut-set bounds, KKT certificate structure, and the linear-chain case study.
+  Its README maps these starting at line 21, including the probe-certificate and
+  cut-set/KKT entries around line 31.
+- The NeurIPS-to-POPL boundary in `docs/ARCHITECTURE.md` is an integration plan,
+  not evidence that the work does not exist. The current missing piece is the
+  shared-DAG or explicit-translation layer plus the d-separation-to-CI bridge.
+- The "merge Figure 1 and Figure 2" comment is not grounded for the current
+  `paper/main.tex`; there is one pipeline figure and one PL dictionary table.
+
+## Current theory split
+
+- `popl27`: endpoint caveat, disjointness repair, trail/moral-graph semantics,
+  forward optimizer pipeline, reverse witness extraction pipeline, and
+  `InfoTheoryBridge.lean` as the explicit bridge scaffold.
+- `neurips26/verification`: finite-discrete information theory and QIF/security
+  machinery, including finite PMFs, entropy/CMI, conditional DPI, cut-set
+  bounds, KKT certificate structure, and a linear-chain case study.
+- POPL 2027 TODO: surface calculus, shared-DAG/translation layer, bridge
+  discharge or precise proof-obligation interface, reuse of NeurIPS QIF assets,
+  and appendix/status hardening before July 9, 2026.
