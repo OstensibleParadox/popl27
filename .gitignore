@@ -19,3 +19,6 @@ test_*.lean
 *.synctex.gz
 *.fls
 *.fdb_latexmk
+*.bbl
+*.blg
+*.pdf

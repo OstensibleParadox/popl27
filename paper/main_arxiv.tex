@@ -58,9 +58,9 @@ characterizations---trail blocking~\cite{pearl2009causality} and moralized
 ancestral-graph separation~\cite{lauritzen1996graphical}---as a \emph{verified
 bisimulation} between an operational semantics of active trails and a static
 analysis of moralized-graph reachability.  Our formalization is organized in three layers: a type-safe graph syntax whose pairwise-disjointness invariant
-($\text{DisjointSets}\,X\,Y\,Z$) acts as an affine ownership constraint, a
+($\text{DisjointSets}\,X\,Y\,Z$) acts as an affine ownership constraint; a
 type-indexed intermediate representation ($\text{MAGWalk}$,
-$\text{StaticRoute}$, $\text{OpenTrace}$, $\text{ActiveRoute}$), and
+$\text{StaticRoute}$, $\text{OpenTrace}$, $\text{ActiveRoute}$); and
 constructive witness-extraction pipelines in both directions.
 
 The forward direction is a \emph{certified trace optimizer}: it compiles any active trail
@@ -132,15 +132,14 @@ Our contributions are:
     ($\text{DisjointSets}\,X\,Y\,Z$).
   \item We mechanize the \textbf{forward bisimulation} (soundness): an explicit
     compilation pipeline
-    $\text{Trail} \to \text{BayesBallPath} \to \text{MAGWalk} \to
-    \text{Reachable}$, certified by node-survival proofs.
+    $\text{Trail} \to \text{BayesBallPath} \to \text{MAGWalk} \to \allowbreak \text{Reachable}$,
+    certified by node-survival proofs.
   \item We mechanize the \textbf{reverse bisimulation}
     (witness-producing completeness): a decompilation pipeline
-    $\text{Reachable} \to \text{StaticRoute} \to \text{OpenTrace} \to
-    \text{ActiveRoute} \to \exists\,\text{Trail},\;\neg\text{isBlocked}$.
+    $\text{Reachable} \to \text{StaticRoute} \to \text{OpenTrace} \to \allowbreak \text{ActiveRoute} \to \exists\,\text{Trail},\;\neg\text{isBlocked}$.
     Every stage is type-indexed and constructive, including a proved
     bad-collider normalization (\lean{exists_split}, \lean{ancestor_escape},
-    \lean{route_improves_of_bad}) that strictly decreases a well-founded
+    \lean{route_improves_}\allowbreak\lean{of_bad}) that strictly decreases a well-founded
     measure.  The reverse pipeline carries no \lean{sorry}.
   \item We close the \textbf{full equivalence}
     (\lean{dSeparated_iff_dSeparates}): on the pairwise-disjoint domain,
@@ -149,7 +148,7 @@ Our contributions are:
   \item We delimit the boundary to \textbf{quantitative information flow}: the
     bridge from d-separation to probabilistic conditional independence is
     given as an explicit Lean scaffold
-    (\lean{dSeparation_implies_conditional_independence}) and is deliberately
+    (\lean{dSeparation_}\allowbreak\lean{implies_}\allowbreak\lean{conditional_}\allowbreak\lean{independence}) and is deliberately
     left undischarged, marking precisely where graph semantics ends and
     measure-theoretic work begins.
 \end{enumerate}
@@ -223,6 +222,7 @@ The two pipelines are summarized in Figure~\ref{fig:pipeline}.
 
 \begin{figure}[h]
 \centering
+\resizebox{\textwidth}{!}{
 \begin{tikzpicture}[
   node distance=1.8cm and 2.4cm,
   every node/.style={align=center, font=\small},
@@ -248,7 +248,7 @@ The two pipelines are summarized in Figure~\ref{fig:pipeline}.
   \node[box, left=of ractive] (rtrail) {$\exists\,\text{Trail},\;\neg\text{isBlocked}$};
 
   \draw[arrow, dashed] (rreach) -- node[label]{decompile} (rstatic);
-  \draw[arrow, dashed] (rstatic) -- node[label]{normalize} (rstatic);
+  \draw[arrow, dashed] (rstatic) to [out=110, in=70, looseness=5] node[label]{normalize} (rstatic);
   \draw[arrow, dashed] (rstatic) -- node[label]{compile} (ropen);
   \draw[arrow, dashed] (ropen) -- node[label]{bridge} (ractive);
   \draw[arrow, dashed] (ractive) -- node[label]{realize} (rtrail);
@@ -257,6 +257,7 @@ The two pipelines are summarized in Figure~\ref{fig:pipeline}.
   \node[above=0.3cm of trail, font=\bfseries\small] {Forward: Certified Trace Optimizer};
   \node[below=0.3cm of rtrail, font=\bfseries\small] {Reverse: Decompilation of Semantic Flow};
 \end{tikzpicture}
+}
 \caption{The two witness-extraction pipelines.  Solid arrows: forward
 (soundness).  Dashed arrows: reverse (completeness).  Every arrow, including
 the \emph{normalize} step, is a total constructive function in Lean; the
@@ -401,12 +402,14 @@ constructively reconstructs an active-trail witness---an exploitability
 certificate showing that the conditioning set $Z$ fails to block the flow.
 The pipeline is:
 \[
+\begin{aligned}
 \text{Reachable}
-\;\to\; \text{StaticRoute}
-\;\to\; \text{NormalizedStaticRoute}
-\;\to\; \text{OpenTrace}
+&\;\to\; \text{StaticRoute}
+\;\to\; \text{NormalizedStaticRoute} \\
+&\;\to\; \text{OpenTrace}
 \;\to\; \text{ActiveRoute}
 \;\to\; \exists\,\text{Trail},\;\neg\text{isBlocked}.
+\end{aligned}
 \]
 
 \subsection{From Reachability to StaticRoute}
@@ -461,8 +464,8 @@ $Z$, so it cannot dead-end).  \lean{bad_child_survives} and
 the d-separation graph nodes.  Reattaching the escape chain---backward into $X$
 or forward into $Y$---removes a moral jump of cost $1$ and adds chains of cost
 $0$; the strict decrease then follows by
-\lean{countBadColliders_backwardEscape_append_suffix_lt} (resp.\
-\lean{countBadColliders_prefix_append_forwardEscape_lt}) and \lean{omega}.  As a
+\lean{countBadColliders_}\allowbreak\lean{backwardEscape_}\allowbreak\lean{append_suffix_lt} (resp.\
+\lean{countBadColliders_}\allowbreak\lean{prefix_}\allowbreak\lean{append_}\allowbreak\lean{forwardEscape_lt}) and \lean{omega}.  As a
 deliberate design choice, the witness endpoints may change: rerouting is allowed
 to land on a \emph{different} node of $X$ or $Y$, which is what makes the escape
 construction total.
@@ -569,7 +572,7 @@ bound requires the bridge
 \;\Rightarrow\; \text{conditional DPI} \;\Rightarrow\; \text{cut-set bound}.
 \]
 We state the first step of this bridge as an explicit Lean scaffold,
-\lean{dSeparation_implies_conditional_independence} in
+\lean{dSeparation_}\allowbreak\lean{implies_}\allowbreak\lean{conditional_}\allowbreak\lean{independence} in
 \lean{InfoTheoryBridge.lean}, together with stubs for \lean{FinitePMF} and
 \lean{MarkovCompatible}.  This scaffold is deliberately \emph{not} discharged
 in this artifact: it carries two intentional \lean{sorry}s and is the sole

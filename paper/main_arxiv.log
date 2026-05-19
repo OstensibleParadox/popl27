@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.12)  19 MAY 2026 16:01
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.4.12)  19 MAY 2026 16:31
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1643,51 +1643,30 @@ texlive/2026/texmf-dist/fonts/enc/dvips/libertine/lbtn_nh77jq.enc}]
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
 (Font)              scaled to size 7.3pt on input line 132.
 LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
-(Font)              scaled to size 10.0pt on input line 142.
+(Font)              scaled to size 10.0pt on input line 141.
 
-Overfull \hbox (11.84685pt too wide) in paragraph at lines 137--145
+Overfull \hbox (11.84685pt too wide) in paragraph at lines 137--144
 \T1/LinuxLibertineT-TLF/m/n/10 (-20) tion pipeline $[] \LMS/ntxsy/m/n/10 ! [] !
  [] ! [] ! 9 []\OML/nxlmi/m/it/10 ;  \LMS/ntxsy/m/n/10 :[]$\T1/LinuxLibertineT-
 TLF/m/n/10 (-20) .
  []
 
-
-Overfull \hbox (137.66577pt too wide) in paragraph at lines 149--155
-\T1/LinuxLibertineT-TLF/m/n/10 (-20) to prob-a-bilis-tic con-di-tional in-de-pe
-n-dence is given as an ex-plicit Lean scaf-fold ([]
- []
-
 Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
-nput line 181.
+nput line 180.
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
-(Font)              scaled to size 8.0pt on input line 192.
+(Font)              scaled to size 8.0pt on input line 191.
 [2.2]
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 7.0pt on input line 239.
+(Font)              scaled to size 7.0pt on input line 260.
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
-(Font)              scaled to size 7.0pt on input line 239.
-
-
-Package pgf Warning: Returning node center instead of a point on node border. D
-id you specify a point identical to the center of node ``rstatic''? on input li
-ne 251.
-
-
-Package pgf Warning: Returning node center instead of a point on node border. D
-id you specify a point identical to the center of node ``rstatic''? on input li
-ne 251.
-
+(Font)              scaled to size 7.0pt on input line 260.
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/b/n' will be
-(Font)              scaled to size 9.0pt on input line 257.
-
-Overfull \hbox (264.40938pt too wide) in paragraph at lines 259--264
- [][] 
- []
-
+(Font)              scaled to size 9.0pt on input line 260.
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/it' will be
-(Font)              scaled to size 9.0pt on input line 264.
+(Font)              scaled to size 9.0pt on input line 265.
 
-Class acmart Warning: A possible image without description on input line 266.
+
+Class acmart Warning: A possible image without description on input line 267.
 
 
 Package fancyhdr Warning: \headheight is too small (13.0pt): 
@@ -1698,14 +1677,9 @@ Package fancyhdr Warning: \headheight is too small (13.0pt):
 
 [3.3]
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/sc' will be
-(Font)              scaled to size 10.0pt on input line 316.
+(Font)              scaled to size 10.0pt on input line 317.
  [4.4{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/libertine/lbtn_ncsllp.
 enc}]
-Overfull \hbox (69.51189pt too wide) detected at line 410
-[]  \LMS/ntxsy/m/n/10 !  []  !  []  !  []  !  []  !  9 []\OML/nxlmi/m/it/10 ;  
-\LMS/ntxsy/m/n/10 :[]\OML/nxlmi/m/it/10 :
- []
-
 
 Package fancyhdr Warning: \headheight is too small (13.0pt): 
 (fancyhdr)                Make it at least 18.48402pt, for example:
@@ -1715,39 +1689,35 @@ Package fancyhdr Warning: \headheight is too small (13.0pt):
 
 [5.5]
 LaTeX Font Info:    Trying to load font information for TS1+zi4 on input line 4
-41.
+44.
  (/usr/local/texlive/2026/texmf-dist/tex/latex/inconsolata/ts1zi4.fd
 File: ts1zi4.fd 2018/01/14 TS1/zi4 (Inconsolata)
 )
 LaTeX Font Info:    Font shape `TS1/zi4/m/n' will be
-(Font)              scaled to size 9.0pt on input line 441.
+(Font)              scaled to size 9.0pt on input line 444.
 Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `zi4' (encoding: TS1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 
-Overfull \hbox (65.84222pt too wide) in paragraph at lines 455--469
-[][][][] \T1/LinuxLibertineT-TLF/m/n/10 (-20) (resp. []
- []
-
 [6.6{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/inconsolata/i4-ts1.enc}
 ]
 
 LaTeX Font Warning: Font shape `T1/zi4/m/it' undefined
-(Font)              using `T1/zi4/m/n' instead on input line 507.
+(Font)              using `T1/zi4/m/n' instead on input line 510.
 
 LaTeX Font Info:    Font shape `T1/zi4/m/it' will be
-(Font)              scaled to size 9.0pt on input line 507.
+(Font)              scaled to size 9.0pt on input line 510.
 LaTeX Font Info:    Font shape `T1/zi4/m/it' will be
-(Font)              scaled to size 10.0pt on input line 508.
+(Font)              scaled to size 10.0pt on input line 511.
 
 LaTeX Font Warning: Font shape `T1/zi4/b/it' undefined
-(Font)              using `T1/zi4/b/n' instead on input line 509.
+(Font)              using `T1/zi4/b/n' instead on input line 512.
 
 LaTeX Font Info:    Font shape `T1/zi4/b/it' will be
-(Font)              scaled to size 9.0pt on input line 509.
+(Font)              scaled to size 9.0pt on input line 512.
 
-Overfull \hbox (8.35983pt too wide) in paragraph at lines 523--538
+Overfull \hbox (8.35983pt too wide) in paragraph at lines 526--541
  [][] 
  []
 
@@ -1758,13 +1728,7 @@ Package fancyhdr Warning: \headheight is too small (13.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-5.48402pt}.
 
-[7.7]
-Overfull \hbox (48.1929pt too wide) in paragraph at lines 570--581
-\T1/LinuxLibertineT-TLF/m/n/10 (-20) We state the first step of this bridge as 
-an ex-plicit Lean scaf-fold, []
- []
-
-[8.8] (./main_arxiv.bbl
+[7.7] [8.8] (./main_arxiv.bbl
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
 (Font)              scaled to size 8.0pt on input line 58.
 )
@@ -1809,13 +1773,13 @@ Package rerunfilecheck Info: File `main_arxiv.out' has not changed.
 (rerunfilecheck)             Checksum: BE6E227310F2238112FF4AE5D6CC8404;5230.
  ) 
 Here is how much of TeX's memory you used:
- 33713 strings out of 467525
- 604026 string characters out of 5418982
- 1205278 words of memory out of 5000000
- 61300 multiletter control sequences out of 15000+600000
- 828790 words of font info for 412 fonts, out of 8000000 for 9000
+ 33731 strings out of 467525
+ 604273 string characters out of 5418982
+ 1217024 words of memory out of 5000000
+ 61321 multiletter control sequences out of 15000+600000
+ 828419 words of font info for 410 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
- 90i,16n,131p,1007b,2136s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,16n,131p,1007b,2138s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2026/texmf-dist/fonts/type1/public/inconsolata/Inconsolat
 a-zi4b.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/inconsolata/I
 nconsolata-zi4r.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/newt
@@ -1831,7 +1795,7 @@ ist/fonts/type1/public/libertine/LinLibertineTI.pfb></usr/local/texlive/2026/te
 xmf-dist/fonts/type1/public/newtx/txmiaX.pfb></usr/local/texlive/2026/texmf-dis
 t/fonts/type1/public/newtx/txsym.pfb></usr/local/texlive/2026/texmf-dist/fonts/
 type1/public/newtx/txsys.pfb>
-Output written on main_arxiv.pdf (9 pages, 531852 bytes).
+Output written on main_arxiv.pdf (9 pages, 532036 bytes).
 PDF statistics:
  374 PDF objects out of 1000 (max. 8388607)
  325 compressed objects within 4 object streams

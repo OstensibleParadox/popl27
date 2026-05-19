@@ -11,7 +11,7 @@
 
 | Layer | PL Framing | Formal Asset | Status |
 |---|---|---|---|
-| L1: Syntax & Types | Type-safe graph syntax for conditional flow; `DisjointSets` is an ownership/aliasing side-condition for conditioned variables. | `DAG`, `DisjointSets`, blocking predicates. | Core definitions complete; a surface AST + typechecker is future packaging work. |
+| L1: Syntax & Types | Type-safe graph syntax for conditional flow; `DisjointSets` is an ownership/aliasing side-condition for conditioned variables. Includes a first-order surface calculus with rank-based acyclicity certificates. | `DAG`, `DisjointSets`, `DAG.ofRank`, blocking predicates. | Core definitions complete; surface AST and rank-based elaboration are in place. |
 | L2: Trace Bisimulation | Verified bisimulation: certified compilation and decompilation of information traces. Forward is a certified optimizer; backward is witness decompilation. | Forward: `Trail -> BayesBallPath -> MAGWalk`. Backward: `MAGWalk -> StaticRoute -> OpenTrace -> ActiveRoute -> Trail`. | Forward + reverse pipelines are complete and closed; key reverse theorems include `route_improves_of_bad` and `activeWitness_of_not_dSeparated` (in `TraceSynthesis/Assembly.lean`). |
 | L3: Quantitative Bounds | From qualitative reachability to Shannon-style bounds (QIF / cut-set certificates). | Information-theory layer lives in the separate `neurips26` project; this repo contains the scaffold entrypoint `InfoTheoryBridge.lean`. | Not integrated yet: needs a bridge from d-separation to conditional independence plus a shared DAG foundation. |
 
@@ -78,22 +78,30 @@ The NeurIPS 2026 verification stack (`neurips26`) and this POPL 2027 core calcul
 | d-separation graph semantics | `DSeparation/*` | Complete | Moralization, blocking, Bayes-ball, `MAGWalk`. |
 | Reverse witness extraction | `DSeparation/TraceSynthesis/*` | Complete | Reverse pipeline + cleanup closed. |
 
-### Actual Gaps
+### NeurIPS Reuse Inventory
+
+"Unused" here means "not yet migrated into popl27", not dead code. The following NeurIPS assets remain unmigrated and are reusable once the DAG/CI bridge exists:
+
+- **Called by architecture**: `InfoTheory.lean`, `InfoTheoryHelpers.lean`, `DualCertificate.lean`, `Screenability.lean`, `InternalImpossibility.lean`, `CutSetBoundExtract.lean`, `ChannelCapacity.lean`, `CaseStudy.lean`, `MarkovGenerator.lean`.
+- **Supporting/secondary modules**: CMI definitions, trace-recoverability bridges, quotient/semantic closure, PAC/geometric/impossibility utilities, aggregate shims.
+- `DAGParser.lean` is already migrated/split into `DSeparation/*` and is not considered unused.
+
+### Actual Gaps (TODOList)
 
 | # | Gap | Difficulty | Note |
 |---|---|---|---|
-| 1 | Bridge the two DAG definitions (shared foundation or explicit translation). | Medium engineering | Required before importing `neurips26` results into this repo. |
-| 2 | Prove d-separation implies conditional independence (under a Markov-compatible semantics). | High | Needs probabilistic graphical model semantics. |
-| 3 | Replace NeurIPS cut-set capacity axioms using the bridge plus DPI. | High | Depends on (2). |
-| 4 | Preserve the closed reverse witness extractor while building the bridge. | Low | Keep `TraceSynthesis` stable and regression-tested. |
+| 1 | Build a shared-DAG or explicit-translation layer between neurips26 and popl27. | Medium engineering | Required before importing `neurips26` results. |
+| 2 | Replace `InfoTheoryBridge.lean` stubs by proving/stating the d-separation $\to$ conditional-independence bridge using NeurIPS machinery. | High | After DAG bridge. |
+| 3 | Reuse NeurIPS conditional DPI and cut-set/KKT pipeline after the DAG/CI bridge exists. | High | Depends on above. |
+| 4 | Preserve `TraceSynthesis` as the frozen closed graph-semantics core. | Low | Regression target only. |
 
-### Priority Order
+### Priority Order (TODOList)
 
-1. Treat `TraceSynthesis` as the closed graph-semantics and witness-extraction core.
-2. Keep `popl27` focused on the information-flow core calculus: typed query well-formedness, trace optimization, and witness decompilation.
-3. Create an integration layer for the `neurips26` and `popl27` DAG definitions.
-4. Then formalize d-separation to conditional independence.
-5. Finally replace NeurIPS cut-set capacity axioms with theorem-level proofs.
+1. Preserve `TraceSynthesis` as frozen closed graph-semantics core.
+2. Build a shared-DAG or explicit-translation layer between neurips26 and popl27.
+3. Replace `InfoTheoryBridge.lean` stubs by proving/stating the d-separation $\to$ conditional-independence bridge using NeurIPS machinery.
+4. Reuse NeurIPS conditional DPI and cut-set/KKT pipeline after the DAG/CI bridge exists.
+5. Report remaining external assumptions separately from mechanized reusable proofs.
 
 ### Bridge Chain
 
