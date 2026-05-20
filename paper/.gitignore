@@ -1,6 +1,0 @@
-# Whitelist: only main tex/bib/log/pdf are tracked; everything else ignored
-*
-!main*.tex
-!main*.pdf
-!*.bib
-!*.log

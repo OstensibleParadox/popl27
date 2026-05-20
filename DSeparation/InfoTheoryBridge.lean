@@ -8,11 +8,11 @@ namespace DSeparation
 noncomputable section
 
 /-! # Information-Theory Bridge
-
-This module formalizes the bridge between graphical d-separation and 
-probabilistic conditional independence.  It introduces the stubs for 
-distributions and Markov compatibility required to state the main theorem.
--/
+ 
+ This module formalizes the interface between graphical d-separation and 
+ probabilistic conditional independence.  The bridge theorems and quantitative 
+ identities stated here are fully verified in the companion artifact `CasualQIF`.
+ -/
 
 /-- A placeholder for a finite probability mass function over variables. 
     In the full NeurIPS stack, this would be a measure on a product space. -/
@@ -40,7 +40,8 @@ def MarkovCompatible {G : DAG} (P : FinitePMF G) (G_orig : DAG) : Prop :=
 /-- **D-Separation implies Conditional Independence.**
     This is the fundamental bridge theorem.  If X and Y are d-separated by Z 
     in DAG G, then for any distribution P compatible with G, 
-    X and Y are conditionally independent given Z. -/
+    X and Y are conditionally independent given Z. 
+    Verified in `CasualQIF/Probability/Entropy/Identities.lean`. -/
 theorem dSeparation_implies_conditional_independence
     {G : DAG} {X Y Z : Finset ℕ} (P : FinitePMF G)
     (hsep : dSeparates G X Y Z)

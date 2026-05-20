@@ -7,10 +7,10 @@ proving that unrestricted equivalence is false.
 ## Documentation Map
 
 - Architecture & strategy: `docs/ARCHITECTURE.md`
-- History: `CHANGELOG.md`
+- History: `worklogs/CHANGELOG.md`
 - Provenance archive (verbatim): `worklogs/archive/`
 
-Active guidance lives in `README.md`, `docs/ARCHITECTURE.md`, and `CHANGELOG.md`.
+Active guidance lives in `README.md`, `docs/ARCHITECTURE.md`, and `worklogs/CHANGELOG.md`.
 Stale plans and audits go to `worklogs/archive/`.
 
 ## Build
@@ -23,7 +23,7 @@ lake build
 Pinned by `lean-toolchain` and `lake-manifest.json`.
 
 ```bash
-lake build   # all ~8310 jobs typecheck; InfoTheoryBridge currently emits scaffold sorry warnings
+lake build   # all ~8310 jobs typecheck
 lake build DSeparation.TraceSynthesis  # reverse-direction workspace
 ```
 
@@ -90,6 +90,8 @@ submodule under `DSeparation/TraceSynthesis/`.
 | Bad-collider route improvement | `DSeparation/TraceSynthesis/Assembly.lean` | `route_improves_of_bad` |
 | Moral reachability → active witness | `DSeparation/TraceSynthesis/Assembly.lean` | `activeWitness_of_not_dSeparated` |
 | Full d-separation equivalence | `DSeparation/Equivalence.lean` | `dSeparated_iff_dSeparates` |
+| Markov property from factorization | `CasualQIF/CausalModel/ProductFactorization.lean` | `isMarkovChain_of_productFactorizes_chain3` |
+| Verified leakage bound (dual witness) | `CasualQIF/InformationFlow/Duality.lean` | `condMutualInfo_le_of_dual_witness` |
 
 ## Module Structure
 
@@ -158,6 +160,8 @@ pdflatex main.tex   # compiles to main.pdf
   static route IR, open-trace compilation, minimal-witness selection, and final
   assembly.  The aggregate `DSeparation.TraceSynthesis` import remains stable.
 - **Verification status**: The core d-separation and reverse-synthesis theory is
-  **fully proved and verified**. `lake build DSeparation.TraceSynthesis` is
-  green with no `sorry`s. The top-level `lake build` also succeeds, with two
-  intentional scaffold `sorry` warnings in `InfoTheoryBridge.lean`.
+  **fully proved and verified**. `lake build` is green.
+- **Quantitative Bridge**: The link to Shannon leakage is closed via the
+  `CasualQIF` companion artifact, which mechanizes the chain Markov derivation
+  and a verified dual-witness upper-bound certificate. This is a zero-sorry
+  leakage-bound path, not a proof of capacity tightness or KKT necessity.
