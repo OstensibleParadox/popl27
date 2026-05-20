@@ -39,7 +39,7 @@
 \newcommand{\lean}[1]{\lstinline!#1!}
 \newcommand{\N}{\mathbb{N}}
 
-\title{Beyond Boolean Intersections: A Type-Safe Mechanism for Extracting\\Certified Shannon Bounds from D-Separated Traces}
+\title{Beyond Boolean Intersections: A Verified Bisimulation and Trace Decompiler\\for Causal Graphs}
 
 \author{Lucia Yizi Zhang}
 \affiliation{%
@@ -49,73 +49,56 @@
 
 
 
+\setlength{\headheight}{19pt}
 \begin{document}
 
 \begin{abstract}
-We give a type-safe route from qualitative d-separation to certified
-Shannon-style leakage bounds.  The route has four links:
-d-separation, conditional independence, conditional data processing, and a
-cut-set bound.  This arXiv artifact mechanizes the graph-semantic front end in
-Lean~4; a separate anonymized artifact mechanizes the finite quantitative
-information-flow chain and is cited anonymously \cite{companionqif}.
+We mechanize a verified bisimulation between two standard characterizations of
+d-separation in Lean~4, expose a concrete counterexample to unrestricted
+equivalence, and build a constructive decompiler that synthesizes
+exploitability-certificate witnesses from graph reachability alone.
 
-The graph-semantic core formalizes the two standard d-separation
-characterizations---trail blocking~\cite{pearl2009causality} and moralized
-ancestral-graph separation~\cite{lauritzen1996graphical}---as a verified
-bisimulation between an operational semantics of active trails and a static
-analysis of moralized-graph reachability.  Its three layers are a type-safe
-graph syntax whose pairwise-disjointness invariant
-($\text{DisjointSets}\,X\,Y\,Z$) acts as an affine ownership constraint; a
-type-indexed intermediate representation ($\text{MAGWalk}$,
-$\text{StaticRoute}$, $\text{OpenTrace}$, $\text{ActiveRoute}$); and
-constructive witness-extraction pipelines in both directions.
+The two characterizations---trail blocking~\cite{pearl2009causality} and
+moralized ancestral-graph separation~\cite{lauritzen1996graphical}---have been
+treated as unconditionally equivalent in the literature.  We machine-check a
+counterexample showing that the equivalence fails when an endpoint node lies in
+the conditioning set~$Z$, identify the minimal repair
+($\text{DisjointSets}\,X\,Y\,Z$, an affine ownership constraint), and discharge
+both directions of the corrected equivalence with no proof debt.
 
-The forward direction is a certified trace optimizer: it compiles any active
-trail through a Bayes-ball state machine into a compressed moral-graph walk,
-certifying soundness ($\text{moral-graph separation} \Rightarrow
-\text{trail blocking}$) under the exact domain restriction that repairs
-equivalence.  The reverse direction is a constructive decompiler of semantic
-flow: from moral-graph reachability we reconstruct an explicit active-trail
-witness, including a proved bad-collider normalization that strictly decreases
-a well-founded measure.  Both directions compose into a closed equivalence on
-the pairwise-disjoint domain (\lean{dSeparated_iff_dSeparates}); the graph
-core carries no proof debt.  The local \lean{InfoTheoryBridge.lean} file
-contains two intentional scaffold stubs that restate results proved in the
-anonymized companion artifact.
+The forward direction is a \emph{certified trace optimizer}: it compiles any
+active trail through a Bayes-ball state machine into a compressed moral-graph
+walk, certifying soundness under the exact domain restriction that repairs
+equivalence.  The reverse direction is a \emph{constructive decompiler of
+semantic flow}: from moral-graph reachability we reconstruct an explicit
+active-trail witness, including a proved bad-collider normalization
+(\lean{route_improves_of_bad}) that strictly decreases a well-founded
+measure.  Both directions compose into a closed equivalence on the
+pairwise-disjoint domain (\lean{dSeparated_iff_dSeparates}); the graph core
+carries no proof debt.
+
+The verified bisimulation serves as a zero-sorry graph-semantic foundation for
+certified Shannon-style leakage bounds.  The local
+\lean{InfoTheoryBridge.lean} file contains two intentional scaffold stubs
+restating results from a separate anonymized artifact~\cite{companionqif};
+two named technical debts in the quantitative chain (the Verma--Pearl
+factorization derivation and the dual KL capacity sufficiency theorem) are
+identified in Section~\ref{sec:related} but do not affect the graph core.
 \end{abstract}
 \maketitle
 
 \section{Introduction}\label{sec:intro}
 
-The target is a certified route from a graph query to a quantitative
-information-flow statement:
-\[
-\text{d-separation} \Rightarrow \text{conditional independence}
-\Rightarrow \text{conditional DPI} \Rightarrow \text{cut-set Shannon bound}.
-\]
-This arXiv artifact contains the graph-semantic part of that route.  A
-separate anonymized artifact \cite{companionqif} proves the semantic
-d-separation-to-CI bridge, conditional Markov instances, cut-set bounds,
-capacity certificates, and linear-chain DAG instances.  The local bridge file
-in this repository is therefore a scaffold restating companion-proved results,
-not an in-package proof of the quantitative chain.
+Formalizing both standard characterizations of d-separation in
+Lean~4's dependent type system yields a mechanized counterexample: the
+unrestricted equivalence between Pearl's trail-blocking predicate and
+Lauritzen's moralized ancestral-graph separation is \emph{false}.  When an
+endpoint node lies in the conditioning set~$Z$, the moral-graph construction
+deletes that endpoint while the trail predicate still admits the one-edge trail
+that has no internal triple.
 
-The graph front end still has a sharp technical problem.  Consider the
-simplest possible directed acyclic graph: a chain of three nodes
-$0 \to 1 \to 2$.  Let $X = \{0\}$, $Y = \{1\}$, and $Z = \{0\}$.  Does $Z$
-d-separate $X$ from $Y$?
-
-The two standard textbooks give different answers:
-\begin{itemize}
-  \item \textbf{Trail blocking}~\cite{pearl2009causality} says: examine
-    every undirected trail from $X$ to $Y$; if every internal triple is blocked by
-    $Z$, the sets are d-separated.  The one-edge trail $0 \to 1$ has no internal
-    triple, so it is not blocked.  Hence $X$ and $Y$ are \emph{not} d-separated.
-  \item \textbf{Moral graph separation}~\cite{lauritzen1996graphical} says: take the ancestral
-    subgraph of $X \cup Y \cup Z$, moralize it, delete $Z$, and check whether $X$
-    and $Y$ are disconnected.  Node $0$ is in $Z$, so it is deleted.  The remaining
-    graph has no path from $0$ to $1$, so $X$ and $Y$ \emph{are} d-separated.
-\end{itemize}
+The counterexample lives on the simplest possible directed acyclic graph: a chain of three nodes
+$0 \to 1 \to 2$. We show in Section~\ref{sec:counterexample} that setting $X = \{0\}$, $Y = \{1\}$, and $Z = \{0\}$ breaks equivalence: moral-graph separation unconditionally deletes $Z$ (disconnecting $X$ from $Y$), while trail blocking leaves the one-edge trail $0 \to 1$ unblocked.
 
 We mechanize this discrepancy and its repair, treating the two
 characterizations not as interchangeable definitions but as a \emph{verified
@@ -136,20 +119,23 @@ without a well-typed domain restriction.
 
 \subsection{Contributions}
 
-Our contributions are:
+Contributions:
 \begin{enumerate}
-  \item We formalize both d-separation characterizations in Lean~4 over finite
-    DAGs with natural-number nodes, organized as a three-layer stack:
-    type-safe graph syntax, certified intermediate representations, and
-    constructive witness-extraction pipelines.
-  \item We construct and machine-check a concrete counterexample, proving that
-    unrestricted equivalence is false and identifying the exact repair
-    ($\text{DisjointSets}\,X\,Y\,Z$).
-  \item We mechanize the \textbf{forward bisimulation} (soundness): an explicit
-    compilation pipeline
+  \item We machine-check a concrete counterexample
+    (\lean{dsep_complete_endpoint_in_Z_counterexample}) showing that
+    unrestricted equivalence between trail blocking and moral-graph separation
+    is false, identify the minimal repair ($\text{DisjointSets}\,X\,Y\,Z$ as
+    an affine ownership constraint), and prove that no counterexample survives
+    the repair.
+  \item We formalize both d-separation characterizations in Lean~4 as a
+    three-layer stack: type-safe graph syntax, certified intermediate
+    representations (\lean{MAGWalk}, \lean{StaticRoute}, \lean{OpenTrace},
+    \lean{ActiveRoute}), and witness-extraction pipelines.
+  \item We mechanize the \textbf{certified trace optimizer} (soundness): an
+    explicit compilation pipeline
     $\text{Trail} \to \text{BayesBallPath} \to \text{MAGWalk} \to \allowbreak \text{Reachable}$,
     certified by node-survival proofs.
-  \item We mechanize the \textbf{reverse bisimulation}
+  \item We mechanize the \textbf{constructive decompiler of semantic flow}
     (witness-producing completeness): a decompilation pipeline
     $\text{Reachable} \to \text{StaticRoute} \to \text{OpenTrace} \to \allowbreak \text{ActiveRoute} \to \exists\,\text{Trail},\;\neg\text{isBlocked}$.
     Every stage is type-indexed and constructive, including a proved
@@ -160,14 +146,12 @@ Our contributions are:
     (\lean{dSeparated_iff_dSeparates}): on the pairwise-disjoint domain,
     moral-graph separation holds if and only if every trail is blocked, with
     both directions discharged by the optimizer and the decompiler.
-  \item We connect the graph core to an anonymized quantitative
-    information-flow artifact \cite{companionqif}, which proves the semantic
-    bridge \lean{factorizes_dsep_implies_cond_indep}, cut-set theorem
-    \lean{abstract_cut_set_bound}, KKT capacity certificate
-    \lean{capacity_le_of_kkt}, and end-to-end DAG-routed instance
-    \lean{linear_chain_cut_set_bound_from_dag}.  This arXiv artifact does not
-    import that project; its local \lean{InfoTheoryBridge.lean} file is an
-    explicit scaffold restating the companion-proved bridge.
+  \item We bridge the graph core to a certified Shannon leakage bound via a
+    companion anonymized artifact~\cite{companionqif}. The explicit scaffold
+    \lean{InfoTheoryBridge.lean} restates the companion-proved capacity bounds. 
+    The remaining technical debts bounding this claim are localized to the
+    quantitative pipeline and do not affect the graph-semantic core 
+    (discussed in Section~\ref{sec:related}).
 \end{enumerate}
 
 The graph results are available as a standalone Lean~4 package.  The
@@ -177,8 +161,7 @@ unblocked.
 
 \section{A Three-Layer Architecture}\label{sec:architecture}
 
-Our formal development is organized in three layers that mirror the architecture
-of a verified compiler.
+Our formal development uses three layers mirroring a verified compiler's architecture.
 
 \subsection{Layer 1: Type-Safe Graph Syntax}
 
@@ -239,7 +222,7 @@ junction is $Z$-open.
 
 The two pipelines are summarized in Figure~\ref{fig:pipeline}.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \resizebox{\textwidth}{!}{
 \begin{tikzpicture}[
@@ -282,6 +265,7 @@ The two pipelines are summarized in Figure~\ref{fig:pipeline}.
 the \emph{normalize} step, is a total constructive function in Lean; the
 normalize step is a proved bad-collider minimization
 (Section~\ref{sec:reverse}).}
+\Description{The two witness-extraction pipelines showing forward and reverse logic.}
 \label{fig:pipeline}
 \end{figure}
 
@@ -317,7 +301,7 @@ assumption that $X$, $Y$, and $Z$ are pairwise disjoint.  In applications,
 however, the disjointness precondition is often omitted.  Our counterexample
 (Section~\ref{sec:counterexample}) shows that this omission is not benign.
 
-\section{The Endpoint Caveat: A Counterexample}\label{sec:counterexample}
+\section{The Bug in the Math Textbook}\label{sec:counterexample}
 
 Our counterexample lives on the simplest non-trivial DAG:
 
@@ -357,7 +341,7 @@ moralized graph, and $0$ and $1$ are disconnected.
 $Y \cap Z = \emptyset$, the start node of any trail is never deleted, and the
 endpoint caveat disappears.
 
-\section{Forward Bisimulation: The Certified Trace Optimizer}\label{sec:forward}
+\section{The Certified Trace Optimizer}\label{sec:forward}
 
 Under $\text{DisjointSets}\,X\,Y\,Z$, we mechanize the soundness direction:
 \[
@@ -414,7 +398,7 @@ theorem dSeparated_of_dSeparated_disjoint
     (hsep : DAG.dSeparated G X Y Z) : dSeparates G X Y Z
 \end{lstlisting}
 
-\section{Reverse Bisimulation: Decompilation of Semantic Flow}\label{sec:reverse}
+\section{Decompilation of Semantic Flow}\label{sec:reverse}
 
 The reverse direction is the decompiler: from $\neg\text{DAG.dSeparated}$ it
 constructively reconstructs an active-trail witness---an exploitability
@@ -539,7 +523,7 @@ scope for the equivalence claims.
 To situate this work for a POPL audience, we reframe traditional causal-graph
 vocabulary in programming-languages terms:
 
-\begin{table}[h]
+\begin{table}[ht]
 \centering
 \small
 \begin{tabular}{ll}
@@ -567,7 +551,7 @@ Cut-Set / Mutual Information & Quantitative Information Flow (QIF) capacity boun
 Our mechanization sits at the intersection of causal inference, mechanized probabilistic semantics, and verified compilation. We briefly survey the most closely related lines of work.
 
 \paragraph{Mechanized Causal Inference and D-Separation.}
-Formalizing the graph-theoretic foundations of causal inference is an active frontier. Recently, Chancelier, De Lara, and Heymann~(2024) \cite{chancelier2024conditional} mechanized d-separation as a binary relation using Coq and MathComp/SSReflect, providing a relational-algebraic treatment of graphical separation. Parallel to our work, Anna Zhang~(2025) \cite{coqci2025} formalized the semantics of conditional independence and d-separation in Coq, bridging structural properties with function-based definitions for experimental design.
+Formalizing the graph-theoretic foundations of causal inference is an active area of research. Recently, Chancelier, De Lara, and Heymann~(2024) \cite{chancelier2024conditional} mechanized d-separation as a binary relation using Coq and MathComp/SSReflect, providing a relational-algebraic treatment of graphical separation. Parallel to our work, Anna Zhang~(2025) \cite{coqci2025} formalized the semantics of conditional independence and d-separation in Coq, bridging structural properties with function-based definitions for experimental design.
 
 Both developments adopt standard mathematical formulations without exposing the implicit textbook domain caveats. Our work contributes the first formalized counterexample and repair (the endpoint caveat) for the gap between syntactic trails and moralized node-deletion. We also shift from purely relational verification to a constructive bisimulation that generates executable IRs (e.g., \lean{OpenTrace}), optimized in Lean~4 for computational witness synthesis.
 
@@ -577,7 +561,7 @@ Fritz and Klingler~(2023) \cite{fritz2023dseparation}, extending work by Fritz a
 \paragraph{Verified Trace Bisimulation and Witness Extraction.}
 The forward pipeline (soundness) translates unbounded trace semantics into a compressed step-relation (\lean{MAGWalk}), analogous to the semantics-preserving translations in Leroy's CompCert~(2009) \cite{leroy2009formal}. The reverse pipeline (completeness) deterministically unwinds reachability into a certified active trail, resembling Necula's Proof-Carrying Code~(1997) \cite{necula1997proof}: instead of returning a boolean assertion of an information leak, our decompiler synthesizes an explicit, machine-checkable exploitability certificate. This provides a graph-theoretic substrate for future verified static analyzers of quantitative information flow.
 
-\subsection{Quantitative Information-Flow Bridge}
+\subsection{Quantitative Information-Flow Bridge \& Technical Debts}
 
 \paragraph{Certified Shannon bounds.} Security analysis has moved from
 non-interference (``0 or 1'') to measuring leakage in bits.  The verified
@@ -600,49 +584,29 @@ are stubbed alongside placeholder structures \lean{FinitePMF} and
 \lean{sorry}s, and it restates results proved in the separate anonymized
 artifact \cite{companionqif}.
 
-The companion artifact proves \lean{factorizes_dsep_implies_cond_indep} under
-a stated \lean{FactorizesOverDAG} hypothesis; the structural Verma--Pearl
-derivation of that hypothesis from a DAG factorization theorem remains a
-technical debt, not a gap in the semantic bridge theorem.  It also proves
-\lean{condMarkov_of_factorizes_dsep_fourVar},
-\lean{abstract_cut_set_bound}, \lean{capacity_le_of_kkt}, and the end-to-end
-linear-chain result \lean{linear_chain_cut_set_bound_from_dag}.  The capacity
-premise \lean{h_cap} in \lean{abstract_cut_set_bound} is a theorem
-hypothesis, and the Gaussian-KL steps are carried as explicit external
-premises (\lean{AssumesFanoBound}, \lean{AssumesMissedCellBound}).  The
-remaining open items are listed in Appendix~\ref{app:depplan}.
+Engineering note: the graph artifact and the quantitative artifact are two
+physically separate Lake projects with near-isomorphic DAG definitions and no
+shared imports yet. The two \lean{sorry}s in this repository's
+\lean{InfoTheoryBridge.lean} file are a port placeholder for the proved
+semantic bridge in the cited anonymous artifact.
 
-\section{Conclusion}\label{sec:conclusion}
-
-We formalized the two standard d-separation criteria in Lean~4 as a verified
-bisimulation between an operational semantics of active trails and a static
-analysis of moralized-graph reachability.  We machine-checked a concrete
-counterexample to unrestricted equivalence, characterized the repair
-(pairwise disjointness as an affine ownership constraint), and discharged both
-directions: a certified trace optimizer for soundness and a constructive,
-witness-producing decompiler---with a proved bad-collider normalization---for
-completeness.  The two compose into the closed theorem
-\lean{dSeparated_iff_dSeparates}, and the graph-semantic core carries no proof
-debt.  The local probabilistic bridge scaffold restates companion-proved
-results; what remains is the narrow technical debt listed below.
-
-\appendix
-
-\section{Technical Debts}\label{app:depplan}
-
-This appendix separates proved theorem chains from remaining work.
-
+\paragraph{Remaining Technical Debts.} This section separates proved theorem
+chains from remaining work in the broader pipeline:
 \begin{enumerate}
-  \item \textbf{Structural Verma--Pearl derivation.}  The companion artifact
-    proves the semantic bridge
-    \lean{factorizes_dsep_implies_cond_indep}: under
-    \lean{FactorizesOverDAG}, d-separation implies conditional independence.
-    What remains open is the structural derivation of
-    \lean{FactorizesOverDAG} from a standard DAG factorization theorem.
-  \item \textbf{General capacity metatheorem.}  The companion artifact proves
-    concrete capacity certificates, including \lean{capacity_le_of_kkt}, and
-    uses them in cut-set bounds.  A general Blahut--Arimoto/KKT concavity
-    sufficiency theorem remains future work.
+  \item \textbf{Debt~1: Structural Verma--Pearl derivation.}  The companion
+    artifact proves the semantic bridge \lean{factorizes_dsep_implies_cond_indep} 
+    under a stated \lean{FactorizesOverDAG} hypothesis. What remains open is the 
+    structural derivation of \lean{FactorizesOverDAG} from a standard DAG 
+    factorization theorem; it is a narrow algebraic gap, not a gap in the semantic 
+    bridge theorem. (Sandbox implementation in \texttt{scratch\_markov.lean}; 
+    pending integration.)
+  \item \textbf{Debt~2: General capacity metatheorem (dual KL witness).}  The
+    companion artifact proves concrete capacity certificates, including
+    \lean{capacity_le_of_kkt}, and uses them in cut-set bounds.  A general
+    Blahut--Arimoto/KKT concavity sufficiency theorem with a dual KL witness
+    remains future work. (Sandbox implementation in \texttt{scratch\_dual.lean}; 
+    pending integration.) The Gaussian-KL steps are carried as explicit external
+    premises (\lean{AssumesFanoBound}, \lean{AssumesMissedCellBound}).
   \item \textbf{Surface calculus and certified decision procedure.}  The
     current artifact verifies the intrinsic \lean{DAG} core.  The planned
     first-order surface syntax, rank checker, elaboration soundness theorem,
@@ -650,11 +614,22 @@ This appendix separates proved theorem chains from remaining work.
     procedure are not yet mechanized.
 \end{enumerate}
 
-Engineering note: the graph artifact and the quantitative artifact are two
-physically separate Lake projects with near-isomorphic DAG definitions and no
-shared imports yet.  The two \lean{sorry}s in this repository's
-\lean{InfoTheoryBridge.lean} file are a port placeholder for the proved
-semantic bridge in the cited anonymous artifact.
+\section{Conclusion}\label{sec:conclusion}
+
+A machine-checked counterexample shows that the two standard textbook
+characterizations of d-separation disagree when an endpoint lies in the
+conditioning set.  The minimal repair---$\text{DisjointSets}\,X\,Y\,Z$ as an
+affine ownership constraint---recovers full equivalence.  We discharge both
+directions: a certified trace optimizer (soundness) and a constructive,
+witness-producing decompiler with proved bad-collider normalization
+(completeness), composing into the closed theorem
+\lean{dSeparated_iff_dSeparates} with no proof debt in the graph-semantic core.
+
+The verified bisimulation grounds a certified Shannon leakage-bound pipeline
+via a companion artifact. Two named technical debts in the quantitative 
+pipeline are detailed in Section~\ref{sec:related}.
+
+
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}

@@ -22,3 +22,6 @@ test_*.lean
 *.bbl
 *.blg
 *.pdf
+
+# Antigravity CLI
+.antigravitycli/
