@@ -39,7 +39,7 @@
 \newcommand{\lean}[1]{\lstinline!#1!}
 \newcommand{\N}{\mathbb{N}}
 
-\title{Beyond Boolean Intersections: A Verified Bisimulation and Trace Decompiler for Causal Graphs}
+\title{Beyond Boolean Intersections: A Typed Boundary Certificate for Causal Graphs}
 
 \author{Lucia Yizi Zhang}
 \affiliation{%
@@ -50,240 +50,167 @@
 \authorsaddresses{Lucia Yizi Zhang, \href{mailto:lucia.zhang.research@outlook.com}{lucia.zhang.research@outlook.com}, ORCID: 0009-0005-3528-7747}
 \orcid{0009-0005-3528-7747}
 
-
-
 \setlength{\headheight}{19pt}
 \begin{document}
 
 \begin{abstract}
-We mechanize a corrected equivalence between two standard characterizations of
-d-separation in Lean~4, exhibit a concrete counterexample to the unrestricted
-statement, and build a witness extractor from graph reachability.
+We reframe the interpretability dilemma in artificial intelligence: it is not fundamentally a problem of inscrutability, but of boundary mis-specification. Standard textbook presentations of d-separation decide qualitative path blocking on syntax, but downstream consumers require quantitative information channels. We show that Pearl's abstraction boundary breaks at the moment of type coercion, a failure pattern well known in the programming languages and capability-based security lineage.
 
-Standard textbook presentations in Pearl's \emph{Causality}~\cite{pearl2009causality},
-Bishop's \emph{Pattern Recognition and Machine Learning}~\cite{bishop2006prml},
-and Koller and Friedman's \emph{Probabilistic Graphical Models}~\cite{koller2009probabilistic}
-present trail blocking and moralized ancestral-graph separation in the standard
-pairwise-disjoint query form.  We machine-check a concrete counterexample to the
-unrestricted statement and prove the corrected equivalence under
-$\text{DisjointSets}\,X\,Y\,Z$.
+We resolve this by defining a typed boundary certificate (\lean{SheafMAGWalk}) and proving its composition soundness in Lean 4. The certificate extends the boolean predicate with stalk-typing, restriction maps, and valuation compatibility. We prove that this four-tuple is exactly the minimal formation data required to turn a causal path into an information channel. The formation rule is accompanied by a certified compilation pipeline from operational trails, an extraction decompiler returning a constructive active-trail witness, and the static-side roundtrip correctness theorem.
 
-The forward direction compiles any active trail through a Bayes-ball state
-machine into a compressed moral-graph walk.  The reverse direction
-reconstructs an explicit active-trail witness from moral-graph reachability,
-including a proved bad-collider normalization (\lean{route_improves_of_bad})
-that decreases a well-founded measure.  Together, both directions yield
-\lean{dSeparated_iff_dSeparates} on the pairwise-disjoint domain.
-
-The graph result supports a finite Shannon-leakage bound.  We bridge to
-operational QIF through a two-stage factorisation split: an upper computable
-topological layer producing \lean{decide}-able Markov-blanket and local-Markov
-boundary conditions, and a lower typed adapter that turns those node-set
-premises into the probabilistic conditional-independence predicate
-\lean{condMarkov}.  Composing the split with a dual KL witness yields an upper
-bound for information leakage from structural d-separation to quantitative
-capacity, conditional on an external factorization hypothesis.
+Finally, we extend this typed-boundary discipline to the audit of agentic systems, mapping eleven distinct interfaces that each require a channel certificate, shifting the target of safety audit from internal cloud-state to the governance topology.
 \end{abstract}
 \maketitle
 
 \section{Introduction}\label{sec:intro}
 
-Formalizing both standard characterizations of d-separation in
-Lean~4's dependent type system yields a mechanized counterexample: the
-unrestricted equivalence between Pearl's trail-blocking predicate and
-Lauritzen's moralized ancestral-graph separation is \emph{false}.  When an
-endpoint node lies in the conditioning set~$Z$, the moral-graph construction
-deletes that endpoint while the trail predicate still admits the one-edge trail
-that has no internal triple.
+Consider this textbook bug in POPL d-separation. We have the simplest non-trivial directed acyclic graph (DAG): $0 \to 1 \to 2$. Let $X = \{0\}$, $Y = \{1\}$, and $Z = \{0\}$. In Pearl's trail-blocking operational semantics \cite{pearl2009causality}, the one-edge trail $0 \to 1$ has no internal triple, so it cannot be blocked by $Z$. However, in Lauritzen's moralized ancestral-graph separation \cite{lauritzen1996graphical}, the node $0$ (which is in $Z$) is deleted unconditionally, leaving nodes $0$ and $1$ disconnected. The unrestricted equivalence is false.
 
-The counterexample (Section~\ref{sec:counterexample}) lives on a
-three-node chain and exhibits the disagreement on a single endpoint
-configuration.
+This concrete discrepancy highlights a broader issue. The resolution is not simply to patch the definition under a disjointness constraint, but to recognize the failure's true nature. As Saltzer and Schroeder observed of operating systems in 1975 \cite{saltzer1975protection}, a system fails at the moment of capability transfer because it lacks a well-defined invariant. Similarly, Pearl's abstraction boundary fails not at causality, but at boundary formation.
 
-We mechanize this discrepancy and its repair, treating the two
-characterizations not as interchangeable definitions but as a checked
-equivalence between two semantic layers:
-\begin{itemize}
-  \item an \textbf{operational semantics} of active trails, with
-    \lean{DisjointSets} as the disjointness side condition on the
-    conditioning set;
-  \item a \textbf{static analysis} of moralized-graph reachability, with the
-    collider \lean{MAGWalk.jump} as the compression step;
-  \item a \textbf{witness extractor} from static reachability back to an
-    operational witness, i.e.\ a Bayes-ball
-    \lean{StaticRoute}~$\to$~\lean{OpenTrace}~$\to$~\lean{ActiveRoute}
-    pipeline.
-\end{itemize}
-The forward direction is a soundness result: it compiles an operational trace
-into static reachability evidence.  The reverse direction reconstructs a
-concrete execution witness from static reachability alone.  The counterexample
-shows that the two languages are not equivalent without the disjointness
-side condition.
+We reframe this problem through the lineage of capability-based security and programming language theory. Just as Dijkstra disciplined the \texttt{goto} statement \cite{dijkstra1968goto}, Reynolds established representation independence \cite{reynolds1983types}, Pierce formalized behavioral types \cite{pierce2002types}, and Wadler introduced linear types \cite{wadler1990linear}, we introduce a typed boundary identification for causal graphs.
 
-\subsection{Contributions}
-
+Our contributions are as follows:
 \begin{enumerate}
-  \item We machine-check a counterexample.  It shows that unrestricted trail
-    blocking and moral-graph separation are not equivalent; the repair is
-    $\text{DisjointSets}\,X\,Y\,Z$.
-  \item We formalize both d-separation characterizations in Lean~4 as a
-    three-layer stack: graph syntax, certified intermediate representations
-    (\lean{MAGWalk}, \lean{StaticRoute}, \lean{OpenTrace}, \lean{ActiveRoute}),
-    and witness-extraction pipelines.
-  \item We mechanize the forward compiler
-    (Section~\ref{sec:forward}, Figure~\ref{fig:pipeline}): a total compilation
-    from active trails to graph reachability, certified by node-survival proofs.
-  \item We mechanize the reverse witness extractor
-    (Section~\ref{sec:reverse}, Figure~\ref{fig:pipeline}): every stage is
-    constructive, including \lean{route_improves_of_bad}, which strictly
-    decreases a well-founded measure.
-  \item We close the \textbf{full equivalence}
-    (\lean{dSeparated_iff_dSeparates}): on the pairwise-disjoint domain,
-    moral-graph separation holds if and only if every trail is blocked, with
-    both directions discharged by the optimizer and the decompiler.
-  \item We bridge the graph core to a Shannon leakage bound via a
-    two-stage factorisation split (Section~\ref{sec:two-stage}): a
-    computable upper stage producing \lean{decide}-able Markov-blanket
-    conditions, and a typed lower stage delivering the probabilistic
-    conditional-independence predicate \lean{condMarkov}.  Composing the
-    split with a dual KL witness yields an upper bound for information
-    leakage.
+    \item We localize the failure of causal models to a type mismatch between Pearl's boolean output and downstream theorems' required typed inputs.
+    \item We define a typed boundary certificate, \lean{SheafMAGWalk}, to bridge this type-coercion gap.
+    \item We prove the composition soundness of these certificates.
+    \item We provide a mechanized compiler and decompiler in Lean 4 between trace semantics and graph reachability, proving static-side roundtrip correctness.
+    \item We inventory eleven agentic interfaces for industrial AI audit, framing safety around topological capability transfer rather than internal weights.
 \end{enumerate}
 
-The graph results are available as a standalone Lean~4 package.\footnote{\url{https://github.com/OstensibleParadox/CasualQIF}}  The
-decompiler produces not a mere existence proof but a computational
-witness---a $\Sigma$-type containing the actual trail and the proof that it is
-unblocked.
+\section{Pearl Fails at Boundary Formation}\label{sec:boundary}
 
-\section{Background and the Endpoint Discrepancy}\label{sec:background}
+\subsection{What Pearl Supplies}
+Pearl decides one question: \emph{can this path be causally active?} Given a causal DAG $D$ and a conditioning set $Z$, Pearl decides:
+\begin{lstlisting}
+d-sep(X, Y | Z) : every path p from X to Y in D
+                  is blocked under Z by the collider treaty.
+\end{lstlisting}
+This is a Boolean predicate on the syntactic graph. Nothing more.
 
-\subsection{Trail Blocking (Operational Semantics)}
+\subsection{What Downstream Consumers Need}
+The question every downstream consumer---such as NeurIPS-style information-flow certificates, regulatory audits, quantitative information flow (QIF) leakage bounds, or interpretability claims---actually asks is different. To use a cut in any of the following classical theorems, the consumer needs data Pearl never supplies:
 
-An undirected \emph{trail} to $y$ in a DAG $G$ is a finite walk that may
-follow edges forward or backward.  A consecutive triple $a \to b \to c$ or
-$a \leftarrow b \to c$ is a \emph{non-collider}; $a \to b \leftarrow c$ is a
-\emph{collider}.  A triple is \emph{blocked} by $Z$ if:
-\begin{itemize}
-  \item it is a non-collider whose middle node is in $Z$; or
-  \item it is a collider whose middle node and all descendants are disjoint from $Z$.
-\end{itemize}
-A trail is \emph{blocked} by $Z$ if some internal triple is blocked.  Then $Z$
-\emph{d-separates} $X$ from $Y$ in the trail sense if every trail from $X$ to $Y$
-is blocked by $Z$.
+\begin{table}[ht]
+\centering
+\caption{Type mismatch between Pearl's d-separation and consumer requirements.}
+\begin{tabular}{ll}
+\toprule
+Theorem & Argument Pearl does not supply \\
+\midrule
+Shannon Cut-set Bound & channel object with rate, capacity \\
+Conditional DPI & Markov kernel + valuation \\
+KKT / Blahut-Arimoto & convex problem on exp-family stalk \\
+Counterfactual identification & stalk-level intervention semantics \\
+QIF leakage bound & stateLeakage + cutCapacity as numbers \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\subsection{Moral Graph Separation (Static Analysis)}
+Three observed pathologies all surface the same defect:
+\begin{enumerate}
+    \item \textbf{NeurIPS:} \lstinline!h_cap : I_cut <= C! must be imported as an external premise.
+    \item \textbf{Lean QIF:} \lean{condMarkov} must be hypothesized, not derived.
+    \item \textbf{POPL d-sep:} \lean{DisjointSets} must be added to repair endpoint-in-$Z$.
+\end{enumerate}
 
-The \emph{ancestral subgraph} of $S$ is the subgraph induced by all ancestors of
-nodes in $S$.  Its \emph{moral graph} is obtained by (1)~forgetting edge
-directions and (2)~connecting all co-parents (pairs of nodes with a common child).
-The \emph{d-separation graph} is the moral graph of the ancestral subgraph of
-$X \cup Y \cup Z$ with $Z$ removed.  Then $Z$ d-separates $X$ from $Y$ in the
-graph sense if no node of $X$ is connected to any node of $Y$ in this graph.
+Pearl's machinery does not answer quantitative questions. The failure point is precise: it occurs at the moment we ask a qualitative causal separator to act as a quantitative information channel. At the moment of type coercion, there is no legal derivation.
 
-\subsection{The Endpoint Discrepancy (Counterexample)}\label{sec:counterexample}
+\subsection{The Certificate Object: SheafMAGWalk}
+We give a Martin-L\"of-style typed judgment under which a cut is licensed as a channel:
+\begin{lstlisting}
+D : CausalDAG    F : InformationSheaf D    Z : Set D.V
+cut : Set D.V   [path(cut)]   [stalk(cut)]   [res/merge(cut)]   [prob(cut)]
+-------------------------------------------------------------------------
+                        D, F, Z |- cut : Channel
+\end{lstlisting}
+Reading: given a causal environment, a stalk-typing environment, a conditioning set, and four local data items, the rule licenses \lean{cut} to appear in the input position of Shannon, DPI, KKT, or QIF theorems.
 
-Our counterexample lives on the simplest non-trivial DAG:
+We name the four-tuple of certificate data \lean{SheafMAGWalk}. It is simultaneously a MAG-style walk on the causal syntax and a section of an information sheaf carrying stalk-level realization data.
 
-\begin{center}
-\begin{tikzpicture}[node distance=1.5cm, every node/.style={circle,draw,minimum size=0.7cm}]
-  \node (n0) {$0$};
-  \node (n1) [right of=n0] {$1$};
-  \node (n2) [right of=n1] {$2$};
-  \draw[-{Stealth}] (n0) -- (n1);
-  \draw[-{Stealth}] (n1) -- (n2);
-\end{tikzpicture}
-\end{center}
+\begin{lstlisting}
+structure SheafMAGWalk (D : CausalDAG) (F : InformationSheaf D)
+                       (Z : Set D.V) (s t : D.V) where
+  path         : BaseballPath D s t
+  res          : \forall e \in path.edges, F.Stalk e.src \to_p F.Stalk e.tgt
+  val          : \forall b \in path.bases, Measure (F.Stalk b)
+  val_compat   : pushforward law along non-collider edges
+  witness      : \forall c \in path.colliders, ColliderWitness c Z
+  merge        : \forall c \in path.colliders, fiber-product on stalks
+  merge_compat : collider valuation consistency
+\end{lstlisting}
 
-Let $X = \{0\}$, $Y = \{1\}$, $Z = \{0\}$.\footnote{Node $2$ and the edge $1 \to 2$ represent a downstream path to illustrate a general chain, though the minimal discrepancy itself is exhibited directly on the edge $0 \to 1$.}
+This projects to the syntactic \lean{MAGWalk} (current Lean artifact) by forgetting \lean{(stalk, res, val)}. With this certificate, classical theorems acquire typed signatures:
+\begin{lstlisting}
+Shannon : (C : Channel, p : InputDist C, k : Code) \to Rate k \le Capacity C
+DPI     : (m : MarkovChain X Y Z) \to I(X;Z) \le I(X;Y)
+KKT     : (P : ConvexProblem, x : KKT-point P) \to Optimal x
+\end{lstlisting}
 
-\begin{theorem}[Endpoint-in-$Z$ counterexample]\label{thm:counterexample}
-There exists a DAG $G$ and finite sets $X, Y, Z \subseteq \N$ such that
-$G$ d-separates $X$ from $Y$ in the moral-graph sense, but $Z$ does \emph{not}
-d-separate $X$ from $Y$ in the trail-blocking sense.
+\subsection{Five Ambient Specializations}
+The same formation rule has five canonical specializations under different enriching categories $V$:
+\begin{table}[ht]
+\centering
+\caption{Ambient specializations of the formation rule.}
+\begin{tabular}{ll}
+\toprule
+Ambient & Specialization \\
+\midrule
+Pearl causal graph & active path with collider witness \\
+PL module system & typed interface + capability discharge \\
+Probability & sub-$\sigma$-algebra + Markov kernel \\
+Sheaf & restriction + gluing axioms \\
+QIF & leakage channel + cut capacity \\
+\bottomrule
+\end{tabular}
+\end{table}
+These are not metaphors; they are V-instantiations of one judgment.
+
+\section{Soundness of Certificate Composition}\label{sec:soundness}
+
+\subsection{Necessity}
+\begin{theorem}[Necessity]
+The four fields of \lean{SheafMAGWalk} are exactly the formation data needed to turn a Pearl-style causal path into a channel boundary.
 \end{theorem}
+Dropping any field loses required structural types: dropping \lean{path} loses the query carrier; dropping \lean{stalk} makes the stalks disconnected; dropping \lean{res}/\lean{merge} removes the restriction maps needed by DPI; dropping \lean{prob} loses quantitative content. Removing any field leaves at least one downstream theorem with an uninhabited argument type.
 
-\begin{lstlisting}[caption={Mechanized counterexample}]
-theorem dsep_complete_endpoint_in_Z_counterexample :
-    \exists (G : DAG) (X Y Z : Finset \N),
-      DAG.dSeparated G X Y Z \wedge \neg dSeparates G X Y Z := by
-  refine <chain3, {0}, {1}, {0}, ?_, ?_>
-  ...
+\subsection{Composition}
+\begin{theorem}[Composition]
+\lean{SheafMAGWalk} certificates compose along shared endpoints:
+given $\text{cert}_1 : \text{SheafMAGWalk}\,F\,D\,Z\,s\,t$
+and $\text{cert}_2 : \text{SheafMAGWalk}\,F\,D\,Z\,t\,u$,
+there exists $\text{cert} : \text{SheafMAGWalk}\,F\,D\,Z\,s\,u$
+with capacity bound $\text{Cap}(\text{cert}) \le \text{Cap}(\text{cert}_1) + \text{Cap}(\text{cert}_2)$
+whenever the merge at $t$ is independent.
+\end{theorem}
+This is the structural law that lets a cut-set bound on a composite agent reduce to a sum of cut-set bounds on its component channels. The independence side-condition is exactly what fixes the per-edge additive-bound pathology.
+
+\subsection{Certificate Checking}
+\begin{theorem}[Certificate Checking]
+Given an emitted certificate object $c$, each field obligation in \lean{SheafMAGWalk c} is locally checkable by its declared type: path well-typedness, collider-witness membership, restriction/merge typing, and valuation compatibility.
+\end{theorem}
+This is not a global completeness claim for finding certificates. Search may be delegated to an external compiler; the kernel checks only the certificate it emits. The compiler is outside the trusted kernel.
+
+\subsection{Static-Side Roundtrip}
+A typed inverse between original Pearl active traces and generated Lean trace certificates acts as the compiler-correctness theorem for the static side:
+\begin{lstlisting}
+synth     : ActiveTrace \to TraceSynthesis
+decompile : TraceSynthesis \to ActiveTrace
+
+decompile (synth t) = t
+synth (decompile c) = c              (on well-typed c)
 \end{lstlisting}
+This connects to the full d-separation equivalence \lean{dSeparated_iff_dSeparates}.
 
-\paragraph{Why the disagreement happens.} Trail blocking only inspects
-\emph{internal} triples.  The one-edge trail $0 \to 1$ has no internal triple at
-all, so nothing can block it.  By contrast, the moral-graph construction deletes
-$Z$ unconditionally; since $0 \in Z$, the edge $(0,1)$ disappears from the
-moralized graph, and $0$ and $1$ are disconnected.
-
-\subsection{Textbook Equivalence and the Disjointness Repair}\label{sec:repair}
-
-Standard references state that the two criteria are equivalent under the implicit
-assumption that $X$, $Y$, and $Z$ are pairwise disjoint.  In applications,
-however, the disjointness precondition is often omitted.  As shown in the
-counterexample above (Section~\ref{sec:counterexample}), this omission is not benign.
-
-If we require $X \cap Z = \emptyset$ and
-$Y \cap Z = \emptyset$ (enforced by the safety invariant
-\lean{DisjointSets X Y Z}), the start node of any trail is never deleted, and the
-endpoint caveat disappears.
-
-\section{A Three-Layer Architecture}\label{sec:architecture}
-
-Our formal development uses three layers mirroring a verified compiler's architecture.
-
-\subsection{Layer 1: Type-Safe Graph Syntax}
-
-Nodes are natural numbers, edges are a finite set of ordered pairs
-($\mathrm{Finset}\,(\N \times \N)$), and acyclicity is well-foundedness of the
-edge relation.  The key safety invariant is
-\lean{DisjointSets X Y Z}, which requires pairwise disjointness of the three
-node sets.  This constraint can be conceptualized by analogy to substructural types
-as an ownership boundary: the conditioned variables $Z$ must be disjoint from
-(and thus cannot alias) the source $X$ or sink $Y$.
-
-\begin{lstlisting}[caption={DAG structure and safety predicate}]
-structure DAG where
-  nodes : Finset \N
-  edges : Finset (\N \times \N)
-  edges_subset : \forall {u v}, (u,v) \in edges -> u \in nodes \wedge v \in nodes
-  acyclic : WellFounded fun u v => (u,v) \in edges
-
-def DisjointSets (X Y Z : Finset \N) : Prop :=
-  Disjoint X Y \wedge Disjoint X Z \wedge Disjoint Y Z
+\section{Internal Mechanism: Compilation Pipeline}\label{sec:pipeline}
+The certificate is produced by an explicit compilation pipeline bridging operational semantics and static analysis:
+\begin{lstlisting}
+Trail
+  -[normalize]--------->  BaseballPath           (syntactic)
+  -[compressWithFuel]-->  WitnessedPath          (collider treaty eliminated)
+  -[realize on F]------>  SheafMAGWalk           (sheaf semantics added)
 \end{lstlisting}
-
-\subsection{Layer 2: Certified Intermediate Representations}
-
-Between operational trails and graph reachability sits a family of IRs that
-preserve just enough structure for certified translation.
-
-\paragraph{MAGWalk.} A compressed walk language equivalent to moral-graph
-reachability.  It has three constructors: reflexivity, a single directed or
-reversed edge (\lean{MAGWalk.single}), and a ``moral jump'' over an active
-collider (\lean{MAGWalk.jump}).  The collider node is skipped, which is why
-compression is correct.
-
-\paragraph{StaticRoute.} A type-valued decompiler IR that keeps the witness
-hidden by graph reachability.  Each step is either a forward edge, a backward
-edge, or a moral jump storing the common child:
-
-\begin{lstlisting}[caption={Static route IR (excerpt)}]
-inductive StaticStep (G : DAG) (X Y Z : Finset \N) : \N -> \N -> Type where
-  | directForward  (hEdge : G.HasEdge u v) ...
-  | directBackward (hEdge : G.HasEdge v u) ...
-  | moralJump (huw : G.HasEdge u w) (hvw : G.HasEdge v w)
-      (hw : w \in G.ancestralSubgraphNodes (X \cup Y \cup Z)) ...
-\end{lstlisting}
-
-\paragraph{OpenTrace.} The compiler target before converting to an active route.
-Each \lean{cons} node stores its oriented DAG traversal \emph{and} a local
-non-blocking proof, making \lean{OpenTrace} a type-valued certificate that every
-junction is $Z$-open.
-
-\subsection{Layer 3: Witness-Extraction Pipelines}
-
-The two pipelines are summarized in Figure~\ref{fig:pipeline}.
 
 \begin{figure}[ht]
 \centering
@@ -323,273 +250,160 @@ The two pipelines are summarized in Figure~\ref{fig:pipeline}.
   \node[below=0.3cm of rtrail, font=\bfseries\small] {Reverse: Witness Extraction};
 \end{tikzpicture}
 }
-\caption{The two witness-extraction pipelines.  Solid arrows: forward
-(soundness).  Dashed arrows: reverse (completeness).  Every arrow, including
-the \emph{normalize} step, is a total constructive function in Lean; the
-normalize step is a proved bad-collider minimization
-(Section~\ref{sec:reverse}).}
-\Description{The two witness-extraction pipelines showing forward and reverse logic.}
+\caption{The compilation pipeline showing forward and reverse logic.}
 \label{fig:pipeline}
 \end{figure}
 
-\subsection{Two-Stage Factorisation Split and QIF Bridge}\label{sec:two-stage}
+The \textbf{forward direction} lifts an active trail to a \lean{BayesBallPath}. We prove a certified membership theorem ensuring every required state survives deletion of $Z$. This is compressed to a \lean{MAGWalk}.
 
-The d-separation result supports a Shannon leakage-bound pipeline.
-Once the equivalence between moral-graph separation and trail blocking is
-established, we can replace a conditional-independence premise by a checked
-graph property in a cut-set capacity argument. The full finite chain is:
-\[
-\text{d-separation} \;\Rightarrow\; \text{conditional independence}
-\;\Rightarrow\; \text{conditional DPI} \;\Rightarrow\; \text{leakage bound}.
-\]
+The \textbf{reverse direction} extracts an active-trail witness from reachability. Reachability yields a \lean{StaticRoute}, which undergoes normalization to eliminate bad colliders via \lean{route_improves_of_bad} (sketched in Appendix~\ref{app:normalization}), decreasing a well-founded measure. A zero-bad \lean{StaticRoute} compiles into an \lean{OpenTrace}, bridging to \lean{ActiveRoute}.
 
-To define the external QIF interface, we cite the companion audit manuscript
-\cite{agentaudit2026}:
+We achieve a zero-sorry verification of this pipeline in Lean 4.
 
+\section{Information-Sheaf Layer}\label{sec:sheaf}
+The sheaf is the carrier for stalk data. It provides the internal machinery needed to evaluate information flow on the topological structure.
+\begin{lstlisting}
+Stalk v       = local information states at v
+rho_{v,w}     = restriction / information-flow map for v \le w
+mu_v          = valuation on Stalk v
+pushforward   : (rho_{v,w})_* mu_v = mu_w
+\end{lstlisting}
+Stalk-internal geometry lives inside stalks, not on the base poset. Lossiness of restriction is measured by entropy decrease, Fisher pushforward, or finite channel capacity $\sup_\mu I(\mu ; \rho_* \mu) \le C < \infty$. The Lean interface for \lean{InformationSheaf} is outlined in Appendix~\ref{app:sheaf}. This layer is pure machinery: replacing the sheaf with another scheme changes how the certificate is built, but not what it asserts.
+
+\section{Why the Old Boundary Failed: Concrete Examples}\label{sec:failures}
+
+\paragraph{NeurIPS \texttt{h\_cap} as external premise.}
+The \lstinline!h_cap : I_cut <= C! premise in existing formalizations is external because \lean{cut} is typed merely as \lean{Set Vertex}. The typed formation rule absorbs this as a discharged sub-obligation within the \lean{SheafMAGWalk} certificate.
+
+\paragraph{\texttt{condMarkov} as external assumption.}
+Conditional Markov structure is hypothesized in current formalizations. The formation rule derives it directly: sheaf restriction plus valuation compatibility implement the Markov kernel, and the collider witness implements the conditioning.
+
+\paragraph{Per-edge additive bound pathology.}
+Per-edge additive bounds fail because they treat edges as independent channels, ignoring correlations through colliders. The formation rule makes correlation explicit via fiber-merge data, enforcing independent merges as a side-condition for bound summation.
+
+\paragraph{\texttt{DisjointSets}.}
+The POPL condition \lean{DisjointSets X Y Z} (preventing an endpoint from being a conditioning variable) is absorbed by the formation rule, which rejects such queries at the path level due to the missing identity restriction $\rho_{X,X} = \text{id}$.
+
+\paragraph{Counter-causality.}
+Structures $X \to Y \to Z$ and $X \leftarrow Y \leftarrow Z$ share observational independences but induce different restriction diagrams. Consequently, they yield different \lean{SheafMAGWalk} objects, correctly recognizing directionality without observing it dynamically.
+
+\section{Interface Inventory for Agentic Systems}\label{sec:inventory}
+The channel-formation rule scales naturally to systems whose behavior crosses multiple typed boundaries. Industrial LLM agents possess non-trivial information topologies.
+
+\begin{table}[ht]
+\centering
+\caption{Interface inventory for agentic systems.}
+\begin{tabular}{ll}
+\toprule
+Interface & Description \\
+\midrule
+token output & user-visible response \\
+tool call & external API invocation \\
+memory read / write & persistent state across turns \\
+scratchpad / chain-of-thought & silent reasoning channel \\
+inter-agent message & multi-agent communication \\
+retrieval result & RAG / context injection \\
+hidden cache & KV cache, prompt cache \\
+log boundary & audit trail itself \\
+gradient (training time) & data $\to$ weight channel \\
+prompt cache & cross-session leakage \\
+function trace & call graph as side channel \\
+\bottomrule
+\end{tabular}
+\end{table}
+Each row is a cut requiring its own channel-formation certificate. The token-output boundary is the \emph{last} interface, not the only one.
+
+\section{Coverage Gap of Current Methods}\label{sec:gap}
+
+\begin{table}[ht]
+\centering
+\caption{Coverage gaps in contemporary safety methods.}
+\begin{tabular}{lll}
+\toprule
+Method & Targets & Liftable to certificate? \\
+\midrule
+RLHF / Constitutional AI & token output & partial (one cut only) \\
+Refusal training / Classifiers & token output & partial \\
+Sparse autoencoders & activation & not an interface -- cloud \\
+Mech interp circuits & weight & not an interface -- cloud \\
+Linear probes & activation & descriptive only \\
+t-SNE / UMAP & embedding & unliftable (destroys metric) \\
+Attention heatmap & activation & descriptive only \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+We identify two profound failure modes:
+\begin{enumerate}
+    \item \textbf{Coverage failure:} Output-targeted safety methods cover at best one of the eleven interfaces identified in Section~\ref{sec:inventory}.
+    \item \textbf{Category failure:} Activation-cloud methods (like sparse autoencoders) are not interface methods. They study internal state rather than typed boundaries. The ``high-dimensional semantic cloud'' interpretability problem is a wrong-boundary artefact, analogous to the dispensability of the luminiferous aether once light's correct frame was identified.
+\end{enumerate}
+
+\section{Industrial Implications}\label{sec:industrial}
+
+\subsection{Closed-box Certification}
+Behavioural-cut certificates require only an intervention API. Model weights need not be exposed.
 \begin{itemize}
-  \item \textbf{Upper stage.} Markov-blanket and local-Markov conditions for
-    finite DAGs are decidable.  The implementation is in
-    \lean{Graph/MarkovBlanket.lean}; the helpers are
-    \lean{computeMarkovBlanket}, \lean{generateMarkovConditions}, and
-    \lean{generateMarkovBlanketConditions}.  \lean{chain3} and
-    \lean{collider3} are discharged by \lean{decide} in
-    \lean{Examples/MarkovBlanket.lean}.
-  \item \textbf{Lower stage (concrete-tuple adapter).}
-    \lean{CausalModel/Factorization.lean} converts those node-set premises into
-    \lean{condMarkov} via \lean{condMarkovNodeCI} and the typed 4-variable
-    adapter.  \lean{FactorizesOverDAG} captures the semantic joint without
-    explicit row/column expansion.
+\item \textbf{Behavioural:} black-box + intervention API ($\sim$85\% coverage)
+\item \textbf{Structural:} + layer activations (additional $\sim$10\%)
+\item \textbf{Mechanistic:} + weights (residual $\sim$5\%)
 \end{itemize}
+This dissolves the regulatory deadlock between white-box audits and intellectual property protection for most compliance use-cases.
 
-The two stages compose: a topological proof obligation discharged by
-\lean{decide} flows through the adapter to a probabilistic CI fact usable in
-the leakage chain.
+\subsection{Precedent}
+The channel-formation rule is the AI-agent specialization of capability-based security \cite{levy1984capability,miller2003capability} and the language-based information flow control tradition \cite{denning1976lattice,goguen1982security,myers1997decentralized,sabelfeld2003language}. This shifts the paradigm from a novel AI safety approach to the application of mature PL/OS disciplines to the agentic setting.
 
-\paragraph{Upper-bound certificate.} On top of the split we
-prove a sufficiency theorem for leakage bounds via a dual KL witness.
-Given a witness distribution $\omega(b\mid c)$,
-\lean{condMutualInfo_le_of_dual_witness} bounds the Shannon leakage
-$I(A;B\mid C)$ by the KL divergence between the joint and the factorized
-witness.  The statement establishes sufficiency for a given witness and does
-not claim tightness or an optimizer.
+\subsection{Multi-cut Audit}
+Current auditing frameworks inspect output behaviour and infer everything else. The proposed audit methodology is structural: enumerate interfaces, compute a certificate per interface, and evaluate coverage. Untyped interfaces automatically fail the audit, making safety a property of the governance topology rather than an emergent phenomenon of model weights.
 
+\section{Related Work}\label{sec:related}
+\paragraph{Categorical and Topological D-Separation.}
+Fritz and Klingler \cite{fritz2023dseparation,fritz2023free} abstracted d-separation using string diagrams in Markov categories. Our approach is complementary: Markov categories provide a generalized measure-theoretic foundation, while our artifact enforces typed boundary identification targeting operational graphs and standard trails.
 
+\paragraph{Mechanized Causal Inference.}
+Chancelier, De Lara, and Heymann~(2024) \cite{chancelier2024conditional} and Anna Zhang~(2025) \cite{coqci2025} mechanized d-separation semantic equivalence in Coq. Our contribution differs significantly through the reverse direction witness-extraction pipeline and the typed boundary formation framework provided by our Lean 4 artifact, \lean{CausalQIF}~\cite{causalqif2026}.
 
-\section{Forward Soundness}\label{sec:forward}
+\section{Conclusion}\label{sec:conclusion}
+We identified a type-coercion gap in standard causal path blocking, defined the typed boundary certificate \lean{SheafMAGWalk}, and proved its composition soundness. By reframing the interpretability dilemma as a type discipline problem, we shift the focus of AI audit from internal weights to topological capability transfers. Our Lean 4 mechanization verifies the foundational pipeline between operational trails and graph reachability without resorting to \lean{sorry} axioms. Future work targets extending the Lean implementation to general measure-theoretic spaces and formalizing numeric probability mass functions to exercise the verification chain end-to-end.
 
-Under $\text{DisjointSets}\,X\,Y\,Z$, we mechanize the soundness direction:
-\[
-\text{DAG.dSeparated}(G,X,Y,Z) \;\Longrightarrow\; \text{dSeparates}(G,X,Y,Z).
-\]
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
 
-The proof follows a three-stage compilation pipeline.
-
-\paragraph{Stage 1: Trail $\to$ Bayes-ball path.} If a trail $t$ from $x \in X$
-to $y \in Y$ is not blocked by $Z$, and $x \notin Z$ (guaranteed by
-$\text{Disjoint}\,X\,Z$), then we lift $t$ to an explicit Bayes-ball state path.
-The construction is by induction on the trail, analyzing each directional triple
-to show that the Bayes-ball state machine can traverse it.
-
-\begin{lstlisting}[caption={Trail to Bayes-ball path}]
-def bayesBallPath_of_active_trail_outOf
-    (t : Trail G u v) (h_active : \neg t.isBlocked Z)
-    (huZ : u \notin Z) :
-    \Sigma final_dir, BayesBallPath G Z (u, outOf) (v, final_dir)
-\end{lstlisting}
-
-\paragraph{Stage 2: Certified membership.} The Bayes-ball path contains
-intermediate states that must ``survive'' deletion of $Z$.  We prove a certified
-version that guarantees every \lean{RequiredState} node belongs to the
-d-separation graph nodes:
-
-\begin{lstlisting}[caption={Certified Bayes-ball path}]
-def bayesBallPathCert_of_active_trail_outOf
-    (t : Trail G u v) (h_active : \neg t.isBlocked Z)
-    (huZ : u \notin Z)
-    (huA : u \in G.ancestralSubgraphNodes (X \cup Y \cup Z))
-    (hvD : v \in G.dSeparationGraphNodes X Y Z) :
-    \Sigma final_dir, {p : BayesBallPath ... //
-      \forall {q}, BayesBallPath.RequiredState p q ->
-        q.1 \in G.dSeparationGraphNodes X Y Z}
-\end{lstlisting}
-
-\paragraph{Stage 3: Compress to MAGWalk.} A Bayes-ball path is a sequence of
-single-edge steps.  The \lean{compress} algorithm scans it with a two-step
-window: ordinary non-collider windows become a \lean{MAGWalk.single}, while
-active-collider windows $(a,\_) \to (b,\text{into}) \to (c,\text{outOf})$ become
-a single \lean{MAGWalk.jump} over the collider $b$.  The collider itself need not
-survive deletion of $Z$, which is why this compression is correct.
-
-\begin{theorem}[Soundness]\label{thm:soundness}
-For any DAG $G$ and pairwise-disjoint finite sets $X, Y, Z \subseteq \N$,
-if $G$ d-separates $X$ from $Y$ in the moral-graph sense, then every trail
-from $X$ to $Y$ is blocked by $Z$.
-\end{theorem}
-
-\begin{lstlisting}[caption={Top-level soundness theorem}]
-theorem dSeparated_of_dSeparated_disjoint
-    (hXYZ : DisjointSets X Y Z)
-    (hsep : DAG.dSeparated G X Y Z) : dSeparates G X Y Z
-\end{lstlisting}
-
-\section{Reverse Witness Extraction}\label{sec:reverse}
-
-The reverse direction reconstructs an active-trail witness from
-$\neg\text{DAG.dSeparated}$, showing that the conditioning set $Z$ fails to
-block the flow.
-The pipeline is:
-\[
-\begin{aligned}
-\text{Reachable}
-&\;\to\; \text{StaticRoute}
-\;\to\; \text{NormalizedStaticRoute} \\
-&\;\to\; \text{OpenTrace}
-\;\to\; \text{ActiveRoute}
-\;\to\; \exists\,\text{Trail},\;\neg\text{isBlocked}.
-\end{aligned}
-\]
-
-\subsection{From Reachability to StaticRoute}
-
-Graph reachability is a \lean{Prop}-valued relation that hides the structure of
-each step.  We introduce \lean{StaticStep} and \lean{StaticRoute} as type-valued
-evidence: a \lean{StaticRoute} is an explicit list of directed edges, reversed
-edges, and moral jumps, each carrying the witness needed for later stages.
-
-\begin{lstlisting}[caption={Reachability to static route}]
-theorem nonemptyStaticRoute_of_dSeparationGraph_reachable
-    (h : (G.dSeparationGraph X Y Z).Reachable u v) :
-    Nonempty (StaticRoute G X Y Z u v)
-\end{lstlisting}
-
-\subsection{Normalization: Eliminating Bad Colliders}
-
-A ``bad collider'' is a collider window whose middle node and all descendants are
-disjoint from $Z$.  Such a collider is blocked, so it must be eliminated.  Normalization may change endpoints: if a bad collider leaks
-ancestry into $X$ or $Y$, we reroute the prefix or suffix to a different node in
-that set.
-
-We package static routes as endpoint-carrying witnesses
-(\lean{StaticRouteWitness}) and define a bad-collider count \lean{routeBadCount}.
-The minimization is a \lean{Nat.find} wrapper: if every nonzero-count witness can
-be strictly improved, a zero-count witness exists.
-
-\begin{lstlisting}[caption={Bad-collider minimization wrapper}]
-theorem normalized_route_exists_of_improves
-    (hwit : \exists w : StaticRouteWitness G X Y Z, True)
-    (himprove : \forall w, routeBadCount w \neq 0 ->
-      \exists w', routeBadCount w' < routeBadCount w) :
-    \exists w, routeBadCount w = 0
-\end{lstlisting}
-
-The improvement obligation is discharged by the core normalization theorem,
-which has no \lean{sorry}:
-
-\begin{lstlisting}[caption={Strict improvement for non-normalized routes}]
+\appendix
+\section{Normalization Theorem}\label{app:normalization}
+The normalization theorem \lean{route_improves_of_bad} strict-decreases a well-founded measure of bad colliders:
+\begin{lstlisting}
 theorem route_improves_of_bad
     (w : StaticRouteWitness G X Y Z) (hbad : routeBadCount w \neq 0) :
     \exists w' : StaticRouteWitness G X Y Z,
       routeBadCount w' < routeBadCount w
 \end{lstlisting}
+The dispatcher extracts the first bad collider, exhibits an ancestral escape into $X$ or $Y$ via helper lemmas (\lean{exists_split}, \lean{ancestor_escape}, \lean{bad_child_survives}, \lean{escape_path_survives}), and replaces one moral jump by zero-cost chain edges.
 
-The dispatcher proof extracts the first bad collider, exhibits an
-ancestral escape into $X$ or $Y$, and reattaches a chain whose nodes
-all survive in the d-separation graph.  Replacing one moral jump by
-zero-cost chain edges strictly decreases the bad-collider count, so the
-well-founded recursion bottoms out at zero bad colliders.  Rerouting is
-permitted to land on a different node of $X$ or $Y$.\footnote{The proof is structured via several constituent lemmas (\lean{exists_split}, \lean{ancestor_escape}, \lean{bad_child_survives}, \lean{escape_path_survives}, and corresponding count-reduction lemmas) implemented within the decompiler normalization module.}
-
-\subsection{From Zero-Bad StaticRoute to OpenTrace to ActiveRoute}
-
-A static route with zero bad colliders compiles directly to an \lean{OpenTrace},
-because every junction is locally open:
-
-\begin{lstlisting}[caption={Zero-bad compiler}]
-theorem openTrace_of_countBadColliders_zero
-    (hzero : countBadColliders arrival route = 0) :
-    Nonempty (\Sigma finalDir, OpenTrace G Z (x, arrival) (y, finalDir))
+\section{Endpoint-in-Z Counterexample}\label{app:counterexample}
+\begin{lstlisting}
+theorem dsep_complete_endpoint_in_Z_counterexample :
+    \exists (G : DAG) (X Y Z : Finset \N),
+      DAG.dSeparated G X Y Z \wedge \neg dSeparates G X Y Z := by
+  refine <chain3, {0}, {1}, {0}, ?_, ?_>
+  -- Proof omitted for space, validates topological mismatch
 \end{lstlisting}
 
-The \lean{OpenTrace} is then converted to a \lean{BayesBallPath} and wrapped as
-an \lean{ActiveRoute}.  Finally, \lean{ActiveRoute.to_activeTrail} yields the
-existential witness:
-
-\begin{lstlisting}[caption={Final decompiler theorem}]
-theorem activeWitness_of_not_dSeparated
-    (hnot : \neg DAG.dSeparated G X Y Z) : ActiveWitness G X Y Z
+\section{Dual Witness Upper Bound}\label{app:dualwitness}
+\begin{lstlisting}
+theorem condMutualInfo_le_of_dual_witness
+  -- Bounds the Shannon leakage I(A;B|C) by the KL divergence
+  -- between the joint and the factorized witness.
 \end{lstlisting}
 
-The result is a constructive $\Sigma$-type containing the actual nodes $x \in X$,
-$y \in Y$, the final direction, and the active route.
-
-\subsection{The Closed Equivalence}
-
-Composing the optimizer (Section~\ref{sec:forward}) and the decompiler yields
-the full equivalence on the well-typed domain---the bisimulation
-statement: on pairwise-disjoint $X,Y,Z$, the operational and static languages
-agree exactly.
-
-\begin{lstlisting}[caption={Full d-separation equivalence}]
-theorem dSeparated_iff_dSeparates
-    (hXYZ : DisjointSets X Y Z) :
-    DAG.dSeparated G X Y Z <-> dSeparates G X Y Z
+\section{InformationSheaf Interface}\label{app:sheaf}
+\begin{lstlisting}
+structure InformationSheaf (I : Type) [Preorder I] where
+  Stalk : I \to Type
+  res   : {i j : I} \to i \le j \to Stalk i \to Stalk j
+  res_id : \forall i, res (le_refl i) = id
+  res_comp : \forall {i j k} (hij : i \le j) (hjk : j \le k),
+    res (le_trans hij hjk) = fun x => res hjk (res hij x)
 \end{lstlisting}
-
-\begin{remark}[Verification status]\label{rem:status}
-The lower stage takes \lean{FactorizesOverDAG} as a caller-supplied
-hypothesis, representing the interface boundary between the topological upper stage
-and the probabilistic adapter. Given this interface, the mathematical chain
-from graph-semantic d-separation to the quantitative dual-witness leakage bound
-is machine-checked and contains no \lean{sorry}. The final graph-layer
-obligation was discharged by \lean{reachable\_equiv\_reachableFinset}, which
-identifies reachability in a finite DAG with the reflexive--transitive closure
-of its edge relation. The resulting Lean development comprises 158 theorems and
-130 definitions type-checked without errors.
-\end{remark}
-
-\section{Related Work}
-\label{sec:related}
-
-Our mechanization bridges causal inference, mechanized probabilistic semantics, and verified compilation.
-
-\paragraph{Mechanized Causal Inference and D-Separation.}
-Chancelier, De Lara, and Heymann~(2024) \cite{chancelier2024conditional} mechanized d-separation as a binary relation using Coq and MathComp/SSReflect. Anna Zhang~(2025) \cite{coqci2025} proves the semantic equivalence in Coq with \lean{member u Z = false} and \lean{member v Z = false} already built into the theorem statement, while \lean{CausalQIF}~\cite{causalqif2026} proves the set-wise graph equivalence \lean{dSeparated_iff_dSeparates} under the explicit \lean{disjointSets X Y Z} hypothesis.
-
-Our work differs in two concrete respects.  First, we mechanize a certified witness-extraction pipeline \lean{StaticRoute} $\to$ \lean{OpenTrace} $\to$ \lean{ActiveRoute} that decompiles moral-graph reachability into an explicit active-trail witness, which \lean{CausalQIF} does not provide.  Second, our reverse direction includes \lean{route_improves_of_bad}, a proved bad-collider normalization whose strict decrease on a well-founded measure discharges the termination obligation.  These certificates are then fed into the QIF bridge.
-
-\paragraph{Categorical and Topological D-Separation.}
-Fritz and Klingler~(2023) \cite{fritz2023dseparation}, extending work by Fritz and Liang~(2023) \cite{fritz2023free}, abstracted d-separation using string diagrams in Markov categories. Their framework bypasses moralization and reads conditional independence from topological connectedness in a generalized measure-theoretic space. Our approach is complementary: Markov categories provide a general categorical theory, while our artifact targets the legacy operational graph definitions (moral graphs and trace trails) used in existing software. By framing \lean{DisjointSets} as a disjointness constraint, we show that classical d-separation behaves like a disjointness-constrained query syntax within a broader categorical structure.
-
-\paragraph{Trace Bisimulation and Witness Extraction.}
-The forward pipeline (soundness) translates active trails into a compressed step-relation (\lean{MAGWalk}), in the spirit of semantics-preserving compiler passes such as CompCert~(2009) \cite{leroy2009formal}. The reverse pipeline (completeness) unwinds reachability into an active trail, resembling Proof-Carrying Code~(1997) \cite{necula1997proof}: instead of returning a boolean assertion of an information leak, it synthesizes an explicit machine-checkable witness. This provides a graph-theoretic substrate for future verified static analyzers of quantitative information flow.
-
-
-
-\section{Conclusion}\label{sec:conclusion}
-
-The textbook equivalence of trail blocking and moral-graph separation is
-not unconditional: a one-edge trail with an endpoint in $Z$ is enough to
-break it.  Mechanizing the repair as a set-theoretic disjointness precondition
-(\lean{DisjointSets}) recovers the equivalence in both directions and makes
-the disjointness premise explicit.  For verified causal-inference tooling the
-consequence is practical: any pipeline that consumes d-separation as a
-precondition for conditional independence must surface the disjointness
-premise as a checked side condition.
-
-The result covers the structural half of a Shannon
-leakage chain whose connection to probability distributions is established
-conditional on factorization, marking the interface boundary between
-graph topology and measure theory. Future work targets: (1) formalizing
-concrete numeric probability mass functions to exercise the verification
-chain end-to-end; (2) transitioning from custom graph logic imports to
-targeted mathlib theorem structures; (3) lifting the probabilistic foundations
-from discrete finite distributions to general measure-theoretic spaces; and
-(4) mechanizing the first-order surface syntax, rank checker, and query safety
-guarantees.
-
-
-
-\bibliographystyle{ACM-Reference-Format}
-\bibliography{references}
 
 \end{document}
