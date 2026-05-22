@@ -46,6 +46,9 @@
   \institution{Shanghai Lixin University of Accounting and Finance}
   \country{China}
 }
+\email{lucia.zhang.research@outlook.com}
+\authorsaddresses{Lucia Yizi Zhang, \href{mailto:lucia.zhang.research@outlook.com}{lucia.zhang.research@outlook.com}, ORCID: 0009-0005-3528-7747}
+\orcid{0009-0005-3528-7747}
 
 
 
@@ -79,7 +82,7 @@ boundary conditions, and a lower typed adapter that turns those node-set
 premises into the probabilistic conditional-independence predicate
 \lean{condMarkov}.  Composing the split with a dual KL witness yields an upper
 bound for information leakage from structural d-separation to quantitative
-capacity.
+capacity, conditional on an external factorization hypothesis.
 \end{abstract}
 \maketitle
 
@@ -147,7 +150,7 @@ side condition.
     leakage.
 \end{enumerate}
 
-The graph results are available as a standalone Lean~4 package.  The
+The graph results are available as a standalone Lean~4 package.\footnote{\url{https://github.com/OstensibleParadox/CasualQIF}}  The
 decompiler produces not a mere existence proof but a computational
 witness---a $\Sigma$-type containing the actual trail and the proof that it is
 unblocked.
@@ -550,7 +553,9 @@ of its edge relation. The resulting Lean development comprises 158 theorems and
 Our mechanization bridges causal inference, mechanized probabilistic semantics, and verified compilation.
 
 \paragraph{Mechanized Causal Inference and D-Separation.}
-Chancelier, De Lara, and Heymann~(2024) \cite{chancelier2024conditional} mechanized d-separation as a binary relation using Coq and MathComp/SSReflect. Anna Zhang~(2025) \cite{coqci2025} proves the semantic equivalence in Coq with \lean{member u Z = false} and \lean{member v Z = false} already built into the theorem statement, while \lean{CausalQIF}~\cite{causalqif2026} proves the set-wise graph equivalence \lean{dSeparated_iff_dSeparates} under the explicit \lean{disjointSets X Y Z} hypothesis. Our work differs in scope: it proves semantic propagation of active trails, then normalizes certificates and feeds them into the QIF bridge.
+Chancelier, De Lara, and Heymann~(2024) \cite{chancelier2024conditional} mechanized d-separation as a binary relation using Coq and MathComp/SSReflect. Anna Zhang~(2025) \cite{coqci2025} proves the semantic equivalence in Coq with \lean{member u Z = false} and \lean{member v Z = false} already built into the theorem statement, while \lean{CausalQIF}~\cite{causalqif2026} proves the set-wise graph equivalence \lean{dSeparated_iff_dSeparates} under the explicit \lean{disjointSets X Y Z} hypothesis.
+
+Our work differs in two concrete respects.  First, we mechanize a certified witness-extraction pipeline \lean{StaticRoute} $\to$ \lean{OpenTrace} $\to$ \lean{ActiveRoute} that decompiles moral-graph reachability into an explicit active-trail witness, which \lean{CausalQIF} does not provide.  Second, our reverse direction includes \lean{route_improves_of_bad}, a proved bad-collider normalization whose strict decrease on a well-founded measure discharges the termination obligation.  These certificates are then fed into the QIF bridge.
 
 \paragraph{Categorical and Topological D-Separation.}
 Fritz and Klingler~(2023) \cite{fritz2023dseparation}, extending work by Fritz and Liang~(2023) \cite{fritz2023free}, abstracted d-separation using string diagrams in Markov categories. Their framework bypasses moralization and reads conditional independence from topological connectedness in a generalized measure-theoretic space. Our approach is complementary: Markov categories provide a general categorical theory, while our artifact targets the legacy operational graph definitions (moral graphs and trace trails) used in existing software. By framing \lean{DisjointSets} as a disjointness constraint, we show that classical d-separation behaves like a disjointness-constrained query syntax within a broader categorical structure.
@@ -573,7 +578,7 @@ premise as a checked side condition.
 
 The result covers the structural half of a Shannon
 leakage chain whose connection to probability distributions is established
-conditional on factorization, defining the clean interface boundary between
+conditional on factorization, marking the interface boundary between
 graph topology and measure theory. Future work targets: (1) formalizing
 concrete numeric probability mass functions to exercise the verification
 chain end-to-end; (2) transitioning from custom graph logic imports to
